@@ -1,0 +1,51 @@
+{
+    "name": "@arpadroid/resources",
+    "version": "0.0.1",
+    "description": "Data management abstraction, resources and utilities",
+    "main": "dist/arpadroid-resources.js",
+    "module": "dist/arpadroid-resources.js",
+    "type": "module",
+    "types": "./dist/types.d.ts",
+    "sideEffects": false,
+    "scripts": {
+        "build": "node ./node_modules/@arpadroid/arpadroid/scripts/build-project.mjs --project=resources --minify",
+        "prepublish": "npm run build",
+        "test": "jest",
+        "test:coverage": "jest --coverage",
+        "generate-docs": "jsdoc2md src/*.js > README.md"
+    },
+    "engines": {
+        "node": ">=16.0.0"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/arpadroid/resources.git"
+    },
+    "keywords": [
+        "javascript",
+        "application",
+        "services"
+    ],
+    "author": "Andres Vaquero @arpadroid <web.andresvaquero@gmail.com>",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/arpadroid/resources/issues"
+    },
+    "homepage": "https://github.com/arpadroid/resources#readme",
+    "peerDependencies": {
+        "@arpadroid/tools": "file:../tools",
+        "@arpadroid/application": "file:../application"
+    },
+    "devDependencies": {
+        "@arpadroid/arpadroid": "file:../arpadroid",
+        "@babel/core": "^7.23.9",
+        "@babel/plugin-syntax-import-assertions": "^7.23.3",
+        "@babel/preset-env": "^7.23.9",
+        "babel-jest": "^29.7.0",
+        "jest": "^29.7.0",
+        "jest-environment-jsdom": "^29.7.0",
+        "jest-junit": "^16.0.0",
+        "jsdoc-to-markdown": "^8.0.1",
+        "jsdom": "^24.0.0"
+    }
+}
