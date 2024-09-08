@@ -69,6 +69,12 @@ class ListResource extends Resource {
         return this.pageFilter?.getValue() ?? this._config.currentPage;
     }
 
+    setCurrentPage(page) {
+        this.pageFilter.setValue(page);
+        this._config.currentPage = page;
+        return this;
+    }
+
     getItemRange() {
         const currentPage = this.getPage();
         const itemsPerPage = this.getPerPage();
