@@ -27,6 +27,7 @@ class ListResource extends Resource {
     getDefaultConfig() {
         return {
             pageParam: 'page',
+            searchParam: 'search',
             currentPage: 1,
             itemsPerPage: 0,
             hasSelection: false,
@@ -521,7 +522,7 @@ class ListResource extends Resource {
         if (this.searchFilter) {
             return this.searchFilter;
         }
-        this.searchFilter = this.addFilter('search', {
+        this.searchFilter = this.addFilter(this._config.searchParam, {
             defaultValue: '',
             isRequestFilter: true
         });
