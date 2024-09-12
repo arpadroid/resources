@@ -28,6 +28,9 @@ class ListResource extends Resource {
         return {
             pageParam: 'page',
             searchParam: 'search',
+            perPageParam: 'perPage',
+            sortByParam: 'sortBy',
+            sortDirParam: 'sortDir',
             currentPage: 1,
             itemsPerPage: 0,
             hasSelection: false,
@@ -138,7 +141,9 @@ class ListResource extends Resource {
     }
 
     haveFiltersChanged() {
-        return this.prevFilterSignature && this.prevFilterSignature !== this.getFilterSignature();
+        this.prevFilterSignature = this.filterSignature;
+        this.filterSignature = this.getFilterSignature();
+        return this.prevFilterSignature !== this.filterSignature;
     }
 
     getFilterPayload(filterId) {
@@ -156,10 +161,20 @@ class ListResource extends Resource {
 
     fetch(...args) {
         const rv = super.fetch(...args);
+        this.handleRouteChange();
         if (rv) {
             this.initializeFilters(...args);
         }
         return rv;
+    }
+
+    handleRouteChange() {
+        if (!this._url) {
+            return;
+        }
+        Context.Router.initializeListener('change', () => {
+            Context.Router.listen('ROUTE_CHANGE', () => this.haveFiltersChanged() && this.fetch());
+        });
     }
 
     getQuery() {
@@ -458,8 +473,6 @@ class ListResource extends Resource {
     }
 
     initializeFilters() {
-        this.prevFilterSignature = this.filterSignature;
-        this.filterSignature = this.getFilterSignature();
         this.hasActiveFilter = false;
         this.activeFilters = [];
         this.getFilters().map(filter => {
@@ -474,11 +487,9 @@ class ListResource extends Resource {
     }
 
     addSortFilter(config = {}) {
-        this.sortFilter = this.addFilter(`${this.id}-sort`, {
+        this.sortFilter = this.addFilter(this._config.sortByParam, {
             defaultValue: '',
-            alias: `${this.id}-sortBy`,
-            urlParamName: `${this.id}-sortBy`,
-            // isRequestFilter: true,
+            isRequestFilter: true,
             isURLFilter: true,
             hasLocalStorage: true,
             ...config
@@ -491,7 +502,7 @@ class ListResource extends Resource {
     }
 
     addSortDirFilter(config = {}) {
-        this.sortDirFilter = this.addFilter(`${this.id}-sortDir`, {
+        this.sortDirFilter = this.addFilter(this._config.sortDirParam, {
             isRequestFilter: true,
             isURLFilter: true,
             defaultValue: 'desc',
@@ -619,7 +630,7 @@ class ListResource extends Resource {
         });
         this.perPageFilter = this.addFilter(this.id + '-size', {
             defaultValue: itemsPerPage,
-            hasLocalStorage: true,
+            hasLocalStorage: false,
             alias: this._config.perPageParam ?? 'size',
             urlParamName: this._config.perPageParam,
             queryName: this._config.perPageParam,
