@@ -114,8 +114,8 @@ class ListResource extends Resource {
         return this?.sortDirFilter?.getValue() ?? this._payload?.defaultSorting?.order;
     }
 
-    hasNoSearchResults() {
-        return this._payload.output?.find(item => item.code === 'no-results') !== undefined;
+    isEmpty() {
+        return this._payload.output?.find(item => item.code === 'no-results') == undefined;
     }
 
     mapItem(callback) {
