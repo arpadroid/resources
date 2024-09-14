@@ -70,7 +70,7 @@ class ListResource extends Resource {
     }
 
     getCurrentPage() {
-        return this.pageFilter?.getValue() ?? this._config.currentPage;
+        return Number(this.pageFilter?.getValue() ?? this._config.currentPage);
     }
 
     setCurrentPage(page) {
@@ -114,7 +114,7 @@ class ListResource extends Resource {
         return this?.sortDirFilter?.getValue() ?? this._payload?.defaultSorting?.order;
     }
 
-    isEmpty() {
+    hasResults() {
         return this._payload.output?.find(item => item.code === 'no-results') == undefined;
     }
 
@@ -247,7 +247,7 @@ class ListResource extends Resource {
         }
     }
 
-    refreshList(refreshFilters = true) {
+    refresh(refreshFilters = true) {
         if (refreshFilters) {
             const filtersURL = this.getFiltersURL(false);
             Context.Router.go(filtersURL);
@@ -641,12 +641,44 @@ class ListResource extends Resource {
         return this;
     }
 
+    nextPage() {
+        const page = this.getNextPage();
+        Context.Router.go(
+            editURL(window.location.href, {
+                [this._config.pageParam]: page
+            })
+        );
+        this.pageFilter.setValue(page);
+    }
+
+    previousPage() {
+        const page = this.getPreviousPage();
+        Context.Router.go(
+            editURL(window.location.href, {
+                [this._config.pageParam]: page
+            })
+        );
+        this.pageFilter.setValue(page);
+    }
+
+    getNextPage() {
+        const currentPage = this.getCurrentPage();
+        const totalPages = this.getTotalPages();
+        let page = currentPage + 1;
+        page > totalPages && (page = 1);
+        return page;
+    }
+
+    getPreviousPage() {
+        let page = this.getCurrentPage() - 1;
+        page < 1 && (page = this.getTotalPages());
+        this.pageFilter.setValue(page);
+    }
+
     clearFilters(sendUpdate = false) {
         this.clearFilterValues(true);
         this.hasActiveFilter = false;
-        if (this.pageFilter) {
-            this.pageFilter.resetValue(sendUpdate);
-        }
+        this.pageFilter?.resetValue(sendUpdate);
         const url = this.getClearFiltersURL();
         Context.Router.go(url);
     }
