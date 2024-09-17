@@ -4,6 +4,17 @@
 import { APIService } from '@arpadroid/application';
 import { mergeObjects, ObserverTool } from '@arpadroid/tools';
 
+export const resourceStore = {};
+
+/**
+ * Returns a resource from the resource store given its id.
+ * @param {string} id
+ * @returns {Resource | undefined | unknown}
+ */
+export function getResource(id) {
+    return resourceStore[id];
+}
+
 class Resource {
     request;
     requestHeaders = null;
@@ -26,6 +37,7 @@ class Resource {
         this.setConfig(config);
         this.setUrl(url);
         this._initialize();
+        resourceStore[this.id] = this;
     }
 
     setUrl(url) {
