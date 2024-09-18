@@ -3,7 +3,6 @@
  */
 import { Context } from '@arpadroid/application';
 import { editURL } from '@arpadroid/tools';
-
 import Resource from '../resource/resource.js';
 import ListFilter from './listFilter.js';
 
@@ -305,9 +304,7 @@ class ListResource extends Resource {
             return _item;
         }
         const { preProcessNode } = this._config;
-        if (typeof preProcessNode === 'function') {
-            preProcessNode(node);
-        }
+        typeof preProcessNode === 'function' && preProcessNode(node);
         if (!this.itemsById[id]) {
             const item = this.addItem(payload, false);
             item.node = node;
@@ -340,7 +337,7 @@ class ListResource extends Resource {
         if (typeof item[this.itemIdMap] !== 'undefined') {
             return item[this.itemIdMap];
         }
-        item[this.itemIdMap] = new Symbol('ITEM_ID');
+        item[this.itemIdMap] = Symbol('ITEM_ID');
         return item[this.itemIdMap];
     }
 
