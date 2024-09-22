@@ -40,7 +40,8 @@ class ListResource extends Resource {
             hasToggleSave: false,
             hasSelectionSave: false,
             preProcessItem: undefined,
-            preProcessNode: undefined
+            preProcessNode: undefined,
+            mapItemId: undefined
         };
     }
 
@@ -334,11 +335,8 @@ class ListResource extends Resource {
     }
 
     getItemId(item = {}) {
-        if (typeof item[this.itemIdMap] !== 'undefined') {
-            return item[this.itemIdMap];
-        }
-        item[this.itemIdMap] = Symbol('ITEM_ID');
-        return item[this.itemIdMap];
+        const { mapItemId } = this._config;
+        return mapItemId?.(item) || item[this.itemIdMap] || item.id || Symbol('ITEM_ID');
     }
 
     getNextItem(item = {}) {
@@ -405,7 +403,8 @@ class ListResource extends Resource {
         if (typeof preProcessItem === 'function') {
             item = preProcessItem(item);
         }
-        const id = item[this.itemIdMap] ?? Symbol('ITEM_ID');
+        const id = this.getItemId(item);
+        item.id = id;
         item[this.itemIdMap] = id;
         this.itemsById[item[this.itemIdMap]] = item;
         this.rawItemsById[id] = rawItem;
