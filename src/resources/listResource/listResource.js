@@ -501,7 +501,7 @@ class ListResource extends Resource {
         this.sortDirFilter = this.addFilter(this._config.sortDirParam, {
             isRequestFilter: true,
             isURLFilter: true,
-            defaultValue: 'desc',
+            defaultValue: 'asc',
             ...config
         });
         return this.sortDirFilter;
