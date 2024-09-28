@@ -15,6 +15,15 @@ export function getResource(id) {
     return resourceStore[id];
 }
 
+/**
+ * Removes a resource from the resource store given its id.
+ * @param {string} id
+ * @returns {void}
+ */
+export function removeResource(id) {
+    getResource(id) && delete resourceStore[id];
+}
+
 class Resource {
     request;
     requestHeaders = null;

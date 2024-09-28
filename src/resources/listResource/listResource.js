@@ -3,7 +3,7 @@
  */
 import { Context } from '@arpadroid/application';
 import { editURL } from '@arpadroid/tools';
-import Resource from '../resource/resource.js';
+import Resource, { removeResource } from '../resource/resource.js';
 import ListFilter from './listFilter.js';
 
 class ListResource extends Resource {
@@ -873,6 +873,19 @@ class ListResource extends Resource {
         };
         this._initializePayload(payload, {}, false);
         this.update();
+    }
+
+    destroy() {
+        this.items = [];
+        this.itemsById = {};
+        this.rawItemsById = {};
+        this.selectedItems = [];
+        this.selectedItemsById = {};
+        this.filters = {};
+        this._payload = {};
+        removeResource(this.id);
+        this.clearSelectionData();
+        super.destroy();
     }
 
     // #endregion
