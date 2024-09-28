@@ -8,8 +8,8 @@ import { Context } from '@arpadroid/application';
 class ListFilter {
     /** @type {(property: string, value: unknown) => void} signal */
     signal;
-    /** @type {(property: string, callback: () => void) => () => void} listen */
-    listen;
+    /** @type {(property: string, callback: () => void) => () => void} on */
+    on;
 
     _options = [];
 

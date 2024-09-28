@@ -11,8 +11,8 @@ class MessageResource {
 
     /** @type {(property: string, value: unknown) => void} signal */
     signal;
-    /** @type {(property: string, callback: () => unknown) => () => void} listen */
-    listen;
+    /** @type {(property: string, callback: () => unknown) => () => void} */
+    on;
 
     constructor(config = {}) {
         ObserverTool.mixin(this);
@@ -68,7 +68,7 @@ class MessageResource {
         this._messagesById[message.id] = message;
         this._messages.push(message);
         if (sendUpdate) {
-            this.signal('ADD_MESSAGE', message);
+            this.signal('add_message', message);
         }
         return this._messagesById[message.id];
     }
@@ -159,7 +159,7 @@ class MessageResource {
     deleteMessages() {
         this._messages = [];
         this._messagesById = {};
-        this.signal('DELETE_MESSAGES', this._messages);
+        this.signal('delete_messages', this._messages);
         return this;
     }
 
@@ -180,7 +180,7 @@ class MessageResource {
             }
             delete this._messagesById[message.id];
             if (sendUpdate) {
-                this.signal('DELETE_MESSAGE', message);
+                this.signal('delete_message', message);
             }
         }
     }

@@ -36,8 +36,8 @@ class Resource {
     /** @type {(property: string, value: unknown) => void} signal */
     signal;
 
-    /** @type {(property: string, callback: () => unknown) => () => void} listen */
-    listen;
+    /** @type {(property: string, callback: () => unknown) => () => void} on */
+    on;
 
     constructor(url, config = {}) {
         ObserverTool.mixin(this);
@@ -94,8 +94,8 @@ class Resource {
     fetch(...args) {
         if (this.isReady) {
             this.isReady = false;
-            this.signal('READY', false);
-            this.signal('FETCH');
+            this.signal('ready', false);
+            this.signal('fetch');
             if (this._config.mode === 'consecutive') {
                 this.request = this.fetchConsecutive(...args);
                 return this.request;
@@ -167,7 +167,7 @@ class Resource {
         this._payload = this._getPayload(response);
         this._payload = this._preprocessPayload(this._payload);
         this.requestHeaders = headers;
-        requestAnimationFrame(() => this.signal('PAYLOAD', this._payload));
+        requestAnimationFrame(() => this.signal('payload', this._payload));
         return this._payload;
     }
 
@@ -201,7 +201,7 @@ class Resource {
         setTimeout(() => (this.isReady = true), this._config.debounceFetch);
         this.isReady = true;
         this.hasFetched = true;
-        this.signal('READY', true);
+        this.signal('ready', true);
     }
 
     update(payload) {
@@ -258,7 +258,7 @@ class Resource {
 
     destroy() {
         this._payload = {};
-        this.signal('PAYLOAD', this._payload);
+        this.signal('payload', this._payload);
     }
 
     async onLoad() {
@@ -266,7 +266,7 @@ class Resource {
             return Promise.resolve();
         }
         return new Promise(resolve => {
-            const kill = this.listen('READY', () => {
+            const kill = this.on('ready', () => {
                 resolve();
                 kill();
             });

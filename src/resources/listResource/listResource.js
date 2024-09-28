@@ -173,7 +173,7 @@ class ListResource extends Resource {
             return;
         }
         Context.Router.initializeListener('change', () => {
-            Context.Router.listen('ROUTE_CHANGE', () => this.haveFiltersChanged() && this.fetch());
+            Context.Router.on('route_change', () => this.haveFiltersChanged() && this.fetch());
         });
     }
 
@@ -231,8 +231,8 @@ class ListResource extends Resource {
         }
         this.initializeSelectedItems();
         if (update) {
-            this.signal('ITEMS', this.items);
-            this.signal('ITEMS_UPDATED', this.items);
+            this.signal('items', this.items);
+            this.signal('items_updated', this.items);
         }
         return payload;
     }
@@ -278,8 +278,8 @@ class ListResource extends Resource {
 
     setItems(items) {
         this.items = items.map(item => this.preProcessItem(item));
-        this.signal('SET_ITEMS', this.items);
-        this.signal('ITEMS_UPDATED', this.items);
+        this.signal('set_items', this.items);
+        this.signal('items_updated', this.items);
     }
 
     addItem(item = {}, sendUpdate = true, unshift = false) {
@@ -292,8 +292,8 @@ class ListResource extends Resource {
         }
         this._config.totalItems++;
         if (sendUpdate) {
-            this.signal('ADD_ITEM', item, unshift);
-            this.signal('ITEMS_UPDATED', this.items);
+            this.signal('add_item', item, unshift);
+            this.signal('items_updated', this.items);
         }
         return item;
     }
@@ -321,8 +321,8 @@ class ListResource extends Resource {
     addItems(items, sendUpdate = true, unshift = false) {
         items.map(item => this.addItem(item, false, unshift));
         if (sendUpdate) {
-            this.signal('ADD_ITEMS', items);
-            this.signal('ITEMS_UPDATED', this.items);
+            this.signal('add_items', items);
+            this.signal('items_updated', this.items);
         }
     }
 
@@ -358,8 +358,8 @@ class ListResource extends Resource {
             this._config.totalItems--;
         }
         if (sendUpdate) {
-            this.signal('REMOVE_ITEM', item, index);
-            this.signal('ITEMS_UPDATED', this.items);
+            this.signal('remove_item', item, index);
+            this.signal('items_updated', this.items);
         }
     }
 
@@ -368,8 +368,8 @@ class ListResource extends Resource {
         this.itemsById = {};
         this._config.totalItems = 0;
         if (sendUpdate) {
-            this.signal('REMOVE_ITEMS');
-            this.signal('ITEMS_UPDATED', this.items);
+            this.signal('remove_items');
+            this.signal('items_updated', this.items);
         }
     }
 
@@ -380,7 +380,7 @@ class ListResource extends Resource {
         }
         this.itemsById[item[this.itemIdMap]] = Object.assign(this.itemsById[item[this.itemIdMap]], item);
         if (sendUpdate) {
-            this.signal('UPDATE_ITEM', this.itemsById[item[this.itemIdMap]], index);
+            this.signal('update_item', this.itemsById[item[this.itemIdMap]], index);
         }
     }
 
@@ -778,9 +778,9 @@ class ListResource extends Resource {
         this.setSelectedItems(items);
         const itemID = this.getItemId(item);
         this.selectedItemsById[itemID] = item;
-        this.signal(`ITEM-SELECTED-${itemID}`, true);
+        this.signal(`item_selected_${itemID}`, true);
         if (callOnChange) {
-            this.signal('SELECTION_CHANGE', this.selectedItems);
+            this.signal('selection_change', this.selectedItems);
         }
         return this;
     }
@@ -792,9 +792,9 @@ class ListResource extends Resource {
         const itemID = this.getItemId(item);
         delete this.selectedItemsById[itemID];
         this.setSelectedItems(Object.values(this.selectedItemsById));
-        this.signal(`ITEM-DESELECTED-${itemID}`, false);
+        this.signal(`item_deselected_${itemID}`, false);
         if (callOnChange) {
-            this.signal('SELECTION_CHANGE', this.selectedItems.length);
+            this.signal('selection_change', this.selectedItems.length);
         }
         return this;
     }
@@ -806,7 +806,7 @@ class ListResource extends Resource {
             this.deselectItem(item, false);
         }
         if (callOnChange) {
-            this.signal('SELECTION_CHANGE', this.selectedItems.length);
+            this.signal('selection_change', this.selectedItems.length);
         }
         return this;
     }
@@ -824,7 +824,7 @@ class ListResource extends Resource {
             this.items.map(item => this.deselectItem(item, false));
         }
         if (callOnChange) {
-            this.signal('SELECTION_CHANGE', this.selectedItems.length);
+            this.signal('selection_change', this.selectedItems.length);
         }
         return this;
     }
@@ -845,7 +845,7 @@ class ListResource extends Resource {
         const $items = this.getSelectedItems();
         items.map(item => this.selectItem(item, $items, false));
         if (callOnChange) {
-            this.signal('SELECTION_CHANGE', this.selectedItems);
+            this.signal('selection_change', this.selectedItems);
         }
         return this;
     }
@@ -856,10 +856,10 @@ class ListResource extends Resource {
             localStorage.removeItem(this.selectionLengthKey);
             localStorage.removeItem(this.selectionRedirectKey);
         }
-        this.selectedItems.forEach(item => this.signal(`ITEM-DESELECTED-${item.id}`));
+        this.selectedItems.forEach(item => this.signal(`item_deselected_${item.id}`));
         this.selectedItems = [];
         this.selectedItemsById = {};
-        this.signal('SELECTION_CHANGE', this.selectedItems.length);
+        this.signal('selection_change', this.selectedItems.length);
         return this;
     }
 
