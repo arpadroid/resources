@@ -138,6 +138,7 @@ class ListResource extends Resource {
             this.selectionLengthKey = `${this.id}-selected-length`;
         }
         this._setupFilters();
+        this.handleRouteChange();
     }
 
     haveFiltersChanged() {
@@ -161,7 +162,6 @@ class ListResource extends Resource {
 
     fetch(...args) {
         const rv = super.fetch(...args);
-        this.handleRouteChange();
         if (rv) {
             this.initializeFilters(...args);
         }
@@ -169,10 +169,8 @@ class ListResource extends Resource {
     }
 
     handleRouteChange() {
-        this._url &&
-            this._unsubscribes.push(
-                Context.Router.on('route_change', () => this.haveFiltersChanged() && this.fetch())
-            );
+        const onRouteChanged = () => this.haveFiltersChanged() && this.fetch();
+        Context.Router?.on('route_change', onRouteChanged, this._unsubscribes);
     }
 
     getQuery() {

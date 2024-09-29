@@ -32,7 +32,6 @@ class Resource {
     hasFetched = false;
     pollCount = 0;
     _url;
-    _unsubscribes = [];
 
     /** @type {(property: string, value: unknown) => void} signal */
     signal;
@@ -41,6 +40,7 @@ class Resource {
     on;
 
     constructor(url, config = {}) {
+        this._unsubscribes = [];
         ObserverTool.mixin(this);
         this.id = config?.id ?? this.constructor.name;
         this._initializePayload = this._initializePayload.bind(this);
@@ -271,7 +271,6 @@ class Resource {
 
     destroy() {
         this._payload = {};
-        this.signal('payload', this._payload);
         this._unsubscribes.forEach(unsubscribe => unsubscribe());
     }
 }
