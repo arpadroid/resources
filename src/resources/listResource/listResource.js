@@ -169,12 +169,10 @@ class ListResource extends Resource {
     }
 
     handleRouteChange() {
-        if (!this._url) {
-            return;
-        }
-        Context.Router.initializeListener('change', () => {
-            Context.Router.on('route_change', () => this.haveFiltersChanged() && this.fetch());
-        });
+        this._url &&
+            this._unsubscribes.push(
+                Context.Router.on('route_change', () => this.haveFiltersChanged() && this.fetch())
+            );
     }
 
     getQuery() {

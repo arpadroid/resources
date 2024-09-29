@@ -32,6 +32,7 @@ class Resource {
     hasFetched = false;
     pollCount = 0;
     _url;
+    _unsubscribes = [];
 
     /** @type {(property: string, value: unknown) => void} signal */
     signal;
@@ -256,11 +257,6 @@ class Resource {
         );
     }
 
-    destroy() {
-        this._payload = {};
-        this.signal('payload', this._payload);
-    }
-
     async onLoad() {
         if (this.hasFetched || !this.promise || this._items?.length) {
             return Promise.resolve();
@@ -271,6 +267,12 @@ class Resource {
                 kill();
             });
         });
+    }
+
+    destroy() {
+        this._payload = {};
+        this.signal('payload', this._payload);
+        this._unsubscribes.forEach(unsubscribe => unsubscribe());
     }
 }
 
