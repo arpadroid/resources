@@ -41,7 +41,8 @@ class ListResource extends Resource {
             hasSelectionSave: false,
             preProcessItem: undefined,
             preProcessNode: undefined,
-            mapItemId: undefined
+            mapItemId: undefined,
+            listComponent: undefined
         };
     }
 
@@ -52,6 +53,10 @@ class ListResource extends Resource {
     setContext() {}
 
     getContext() {}
+
+    getComponent() {
+        return this._config.listComponent;
+    }
 
     isCollapsed() {
         return this._config.isCollapsed;
@@ -401,6 +406,8 @@ class ListResource extends Resource {
         }
         const id = this.getItemId(item);
         item.id = id;
+        item.listResource = this;
+        item.list = this.getComponent();
         item[this.itemIdMap] = id;
         this.itemsById[item[this.itemIdMap]] = item;
         this.rawItemsById[id] = rawItem;
