@@ -168,7 +168,7 @@ class Resource {
         this._payload = this._getPayload(response);
         this._payload = this._preprocessPayload(this._payload);
         this.requestHeaders = headers;
-        requestAnimationFrame(() => this.signal('payload', this._payload));
+        this.signal('payload', this._payload);
         return this._payload;
     }
 
