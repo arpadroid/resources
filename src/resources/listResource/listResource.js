@@ -2,7 +2,7 @@
  * @typedef {import('./listFilterInterface').ListFilterInterface} ListFilterInterface
  */
 import { Context } from '@arpadroid/application';
-import { editURL } from '@arpadroid/tools';
+import { editURL, sortObjectArrayByKey, searchObjectArray, paginateArray } from '@arpadroid/tools';
 import Resource, { removeResource } from '../resource/resource.js';
 import ListFilter from './listFilter.js';
 
@@ -23,13 +23,19 @@ class ListResource extends Resource {
         this.selectedItemsById = {};
     }
 
+    isStatic() {
+        return this._config.isStatic ?? !this._config.url;
+    }
+
     getDefaultConfig() {
         return {
             pageParam: 'page',
             searchParam: 'search',
+            searchFields: ['title'],
             perPageParam: 'perPage',
             sortByParam: 'sortBy',
             sortDirParam: 'sortDir',
+            isStatic: undefined,
             currentPage: 1,
             itemsPerPage: 0,
             hasSelection: false,
@@ -112,6 +118,11 @@ class ListResource extends Resource {
     }
 
     getTotalPages(payload = this._payload) {
+        if (this.isStatic()) {
+            const query = this.searchFilter?.getValue();
+            const length = (query && this.staticQueryCount) || this.items.length;
+            return Math.ceil(length / this.getPerPage());
+        }
         return payload?.totalPages ?? this._config.totalPages;
     }
 
@@ -166,11 +177,15 @@ class ListResource extends Resource {
     // #region RESOURCE API.
 
     fetch(...args) {
-        const rv = super.fetch(...args);
-        if (rv) {
-            this.initializeFilters(...args);
-        }
+        const rv = this.isStatic() ? this._fetchStatic(args) : super.fetch(...args);
+        rv && this.initializeFilters(...args);
         return rv;
+    }
+
+    async _fetchStatic() {
+        const payload = { items: this.items };
+        await this._initializePayload(payload);
+        return Promise.resolve(payload);
     }
 
     handleRouteChange() {
@@ -213,7 +228,10 @@ class ListResource extends Resource {
     }
 
     getTotalItems(payload = this._payload) {
-        return payload?.resultCount ?? this.getItems().length;
+        if (this.isStatic() && this.searchFilter?.getValue() && this.staticQueryCount) {
+            return this.staticQueryCount;
+        }
+        return payload?.resultCount ?? this.items?.length ?? 0;
     }
 
     async _initializePayload(payload = {}, headers = {}, update = true) {
@@ -227,18 +245,41 @@ class ListResource extends Resource {
         if (this.pageFilter) {
             this._config.currentPage = parseInt(this.pageFilter.getValue(), 10) || 1;
         }
-        if (this.perPageFilter) {
-            this._config.perPage = this.perPageFilter.getValue();
-        }
+        this.perPageFilter && (this._config.perPage = this.perPageFilter.getValue());
         this.initializeSelectedItems();
         if (update) {
-            this.signal('items', this.items);
-            this.signal('items_updated', this.items);
+            const signalItems = () => {
+                const items = this._getItems();
+                this.signal('items', items);
+                this.signal('items_updated', items);
+            };
+            this.isStatic() ? setTimeout(signalItems, 10) : signalItems();
         }
         return payload;
     }
 
     // #endregion
+
+    //////////////////////////
+    // #region Static API
+    //////////////////////////
+
+    _getItems() {
+        if (!this.isStatic()) return this.items;
+        const { searchFields } = this._config;
+        const query = this.searchFilter?.getValue();
+        let items = searchObjectArray(this.items, query, searchFields);
+        this.staticQueryCount = items.length;
+        const sortBy = this.sortFilter?.getValue();
+        items = sortObjectArrayByKey(items, sortBy, this.sortDirFilter?.getValue());
+        items = paginateArray(items, this.getPerPage(), this.getCurrentPage());
+        this.staticItems = items;
+        return items;
+    }
+
+    ////////////////////////////////
+    // #endregion Static API
+    ////////////////////////////////
 
     // #region LIST API
 
@@ -257,11 +298,11 @@ class ListResource extends Resource {
     }
 
     hasNoItems() {
-        return Boolean(this.isReady && !this.items.length);
+        return Boolean(this.isReady && !this._getItems().length);
     }
 
     hasItems() {
-        return Boolean(this.isReady && this.items.length);
+        return Boolean(this.isReady && this._getItems().length);
     }
 
     toggleList(state) {
@@ -279,8 +320,10 @@ class ListResource extends Resource {
 
     setItems(items) {
         this.items = items.map(item => this.preProcessItem(item));
-        this.signal('set_items', this.items);
-        this.signal('items_updated', this.items);
+        const _items = this._getItems();
+        this.signal('set_items', _items);
+        this.signal('items_updated', _items);
+        this.isStatic() && this.fetch();
     }
 
     addItem(item = {}, sendUpdate = true, unshift = false) {
@@ -294,7 +337,7 @@ class ListResource extends Resource {
         this._config.totalItems++;
         if (sendUpdate) {
             this.signal('add_item', item, unshift);
-            this.signal('items_updated', this.items);
+            this.signal('items_updated', this._getItems());
         }
         return item;
     }
@@ -323,7 +366,7 @@ class ListResource extends Resource {
         items.map(item => this.addItem(item, false, unshift));
         if (sendUpdate) {
             this.signal('add_items', items);
-            this.signal('items_updated', this.items);
+            this.signal('items_updated', this._getItems());
         }
     }
 
@@ -360,7 +403,7 @@ class ListResource extends Resource {
         }
         if (sendUpdate) {
             this.signal('remove_item', item, index);
-            this.signal('items_updated', this.items);
+            this.signal('items_updated', this._getItems());
         }
     }
 
@@ -370,7 +413,7 @@ class ListResource extends Resource {
         this._config.totalItems = 0;
         if (sendUpdate) {
             this.signal('remove_items');
-            this.signal('items_updated', this.items);
+            this.signal('items_updated', this._getItems());
         }
     }
 
@@ -581,9 +624,7 @@ class ListResource extends Resource {
 
     setFilter(name, value = undefined) {
         const filter = this.filters[name];
-        if (typeof filter !== 'undefined') {
-            filter.setValue(value);
-        }
+        filter?.setValue(value);
         return this;
     }
 
