@@ -859,13 +859,14 @@ class ListResource extends Resource {
      * Changes the state of all selections.
      * @param {*} selected
      * @param {*} callOnChange
+     * @param {*} items
      * @returns {this}
      */
-    setSelections(selected, callOnChange = true) {
+    setSelections(selected, callOnChange = true, items = this._getItems()) {
         if (selected) {
-            this.items.map(item => this.selectItem(item, null, false));
+            items.map(item => this.selectItem(item, null, false));
         } else {
-            this.items.map(item => this.deselectItem(item, false));
+            items.map(item => this.deselectItem(item, false));
         }
         if (callOnChange) {
             this.signal('selection_change', this.selectedItems.length);
