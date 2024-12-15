@@ -681,24 +681,20 @@ class ListResource extends Resource {
         return this;
     }
 
+    goToPage(page) {
+        const url = editURL(window.location.href, { [this._config.pageParam]: page });
+        Context.Router.go(url);
+        this.pageFilter.setValue(page);
+    }
+
     nextPage() {
         const page = this.getNextPage();
-        Context.Router.go(
-            editURL(window.location.href, {
-                [this._config.pageParam]: page
-            })
-        );
-        this.pageFilter.setValue(page);
+        this.goToPage(page);
     }
 
     previousPage() {
         const page = this.getPreviousPage();
-        Context.Router.go(
-            editURL(window.location.href, {
-                [this._config.pageParam]: page
-            })
-        );
-        this.pageFilter.setValue(page);
+        this.goToPage(page);
     }
 
     getNextPage() {
@@ -713,6 +709,7 @@ class ListResource extends Resource {
         let page = this.getCurrentPage() - 1;
         page < 1 && (page = this.getTotalPages());
         this.pageFilter.setValue(page);
+        return page;
     }
 
     clearFilters(sendUpdate = false) {

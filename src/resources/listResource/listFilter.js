@@ -86,11 +86,13 @@ class ListFilter {
                 localStorage.setItem(this._id, JSON.stringify(value));
             }
         }
+        // eslint-disable-next-line sonarjs/no-collapsible-if
         if (newValue !== currentValue && callSubscribers) {
             if (typeof callback === 'function') {
                 callback(value);
             }
-            this.signal('value', value, this);
+            /** @todo Check why the filter is receiving double signal. */
+            // this.signal('value', value, this);
         }
         this.value = value;
         this.setIsActive();
