@@ -1,7 +1,8 @@
 /**
  * @typedef {import('./listFilterInterface').ListFilterInterface} ListFilterInterface
+ * @typedef {import('@arpadroid/services').Router} Router
+ * @typedef {import('./listResourceInterface.js').ListResourceInterface} ListResourceInterface
  */
-import { Context } from '@arpadroid/application';
 import { editURL, sortObjectArrayByKey, searchObjectArray, paginateArray } from '@arpadroid/tools';
 import Resource, { removeResource } from '../resource/resource.js';
 import ListFilter from './listFilter.js';
@@ -27,28 +28,32 @@ class ListResource extends Resource {
         return this._config.isStatic ?? !this._config.url;
     }
 
+    /**
+     * Returns the default configuration for the list resource.
+     * @returns {ListResourceInterface}
+     */
     getDefaultConfig() {
         return {
-            pageParam: 'page',
-            searchParam: 'search',
-            searchFields: ['title'],
-            perPageParam: 'perPage',
-            sortByParam: 'sortBy',
-            sortDirParam: 'sortDir',
-            isStatic: undefined,
             currentPage: 1,
-            itemsPerPage: 0,
             hasSelection: false,
-            totalPages: 0,
-            totalItems: 0,
-            isCollapsible: false,
-            isCollapsed: false,
-            hasToggleSave: false,
             hasSelectionSave: false,
+            hasToggleSave: false,
+            isCollapsed: false,
+            isCollapsible: false,
+            isStatic: undefined,
+            itemsPerPage: 0,
+            listComponent: undefined,
+            mapItemId: undefined,
+            pageParam: 'page',
+            perPageParam: 'perPage',
             preProcessItem: undefined,
             preProcessNode: undefined,
-            mapItemId: undefined,
-            listComponent: undefined
+            searchFields: ['title'],
+            searchParam: 'search',
+            sortByParam: 'sortBy',
+            sortDirParam: 'sortDir',
+            totalItems: 0,
+            totalPages: 0,
         };
     }
 
@@ -189,8 +194,10 @@ class ListResource extends Resource {
     }
 
     handleRouteChange() {
+        /** @type {Router} */
+        const router = this._config?.router;
         const onRouteChanged = () => this.haveFiltersChanged() && this.fetch();
-        Context.Router?.on('route_change', onRouteChanged, this._unsubscribes);
+        router?.on('route_change', onRouteChanged, this._unsubscribes);
     }
 
     getQuery() {
@@ -291,8 +298,9 @@ class ListResource extends Resource {
 
     refresh(refreshFilters = true) {
         if (refreshFilters) {
+            const { router } = this._config;
             const filtersURL = this.getFiltersURL(false);
-            Context.Router.go(filtersURL);
+            router?.go(filtersURL);
         }
         return this.fetch() ?? this.request;
     }
@@ -577,7 +585,8 @@ class ListResource extends Resource {
         }
         this.searchFilter = this.addFilter(this._config.searchParam, {
             defaultValue: '',
-            isRequestFilter: true
+            isRequestFilter: true,
+            isURLFilter: true
         });
         return this.searchFilter;
     }
@@ -682,8 +691,9 @@ class ListResource extends Resource {
     }
 
     goToPage(page) {
+        const { router } = this._config;
         const url = editURL(window.location.href, { [this._config.pageParam]: page });
-        Context.Router.go(url);
+        router.go(url);
         this.pageFilter.setValue(page);
     }
 
@@ -716,8 +726,9 @@ class ListResource extends Resource {
         this.clearFilterValues(true);
         this.hasActiveFilter = false;
         this.pageFilter?.resetValue(sendUpdate);
+        const { router } = this._config;
         const url = this.getClearFiltersURL();
-        Context.Router.go(url);
+        router?.go(url);
     }
 
     clearFilterValues(sendUpdate = false) {

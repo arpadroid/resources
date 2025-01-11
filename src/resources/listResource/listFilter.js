@@ -1,9 +1,8 @@
 /**
  * @typedef {import("./listFilterInterface").ListFilterInterface} ListFilterInterface
  */
-
+import { getService } from '@arpadroid/context';
 import { ObserverTool, mergeObjects, arrayEmpty, getURLParam } from '@arpadroid/tools';
-import { Context } from '@arpadroid/application';
 
 class ListFilter {
     /** @type {(property: string, value: unknown) => void} signal */
@@ -125,7 +124,11 @@ class ListFilter {
             return this.urlValue;
         }
         const savedValue = this.getSavedValue();
-        const isPopState = Context.Router?.isPopState();
+        /**
+         * @todo Implement checking is pop state without Context dependency.
+         */
+        const isPopState = Boolean(getService('router')?.isPopState());
+
         if (isURLFilter && typeof this.urlValue !== 'undefined') {
             value = this.urlValue;
         } else if (!isPopState && hasLocalStorage && typeof savedValue !== 'undefined') {

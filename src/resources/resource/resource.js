@@ -1,8 +1,9 @@
 /**
  * @typedef {import('./resourceInterface').ResourceInterface} ResourceInterface
+ * @typedef {import('@arpadroid/services').APIService} APIService
  */
-import { APIService } from '@arpadroid/application';
 import { mergeObjects, ObserverTool } from '@arpadroid/tools';
+import { getService } from '@arpadroid/context';
 
 export const resourceStore = {};
 
@@ -40,6 +41,8 @@ class Resource {
     on;
 
     constructor(url, config = {}) {
+        /** @type {APIService} */
+        this.apiService = getService('apiService');
         this._unsubscribes = [];
         ObserverTool.mixin(this);
         this.id = config?.id ?? this.constructor.name;
@@ -124,16 +127,18 @@ class Resource {
 
     async _fetch() {
         const headers = this.getHeaders();
-        return APIService.fetch(this.getURL(), {
-            query: this.getQuery(),
-            headers
-        }).then(async payload => {
-            const validResponse = this.validateResourcePayload(payload);
-            if (validResponse !== true) {
-                return Promise.reject(validResponse);
-            }
-            return this._initializePayload(payload, headers);
-        });
+        return this.apiService
+            .fetch(this.getURL(), {
+                query: this.getQuery(),
+                headers
+            })
+            .then(async payload => {
+                const validResponse = this.validateResourcePayload(payload);
+                if (validResponse !== true) {
+                    return Promise.reject(validResponse);
+                }
+                return this._initializePayload(payload, headers);
+            });
     }
 
     /**

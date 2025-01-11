@@ -34,7 +34,8 @@
     "homepage": "https://github.com/arpadroid/resources#readme",
     "peerDependencies": {
         "@arpadroid/tools": "file:../tools",
-        "@arpadroid/application": "file:../application"
+        "@arpadroid/context": "file:../context",
+        "@arpadroid/services": "file:../services"
     },
     "devDependencies": {
         "@arpadroid/arpadroid": "file:../arpadroid",

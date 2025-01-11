@@ -1,3 +1,5 @@
+import { Router } from '@arpadroid/services';
+
 export interface ListResourceInterface {
     pageParam?: string;
     currentPage?: number;
@@ -9,4 +11,5 @@ export interface ListResourceInterface {
     isCollapsed?: boolean;
     hasToggleSave?: boolean;
     hasSelectionSave?: boolean;
+    router?: Router;
 }
