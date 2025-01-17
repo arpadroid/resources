@@ -565,6 +565,12 @@ class ListResource extends Resource {
         return this.sortDirFilter ?? this.addSortDirFilter();
     }
 
+    setSort(sortBy, sortDir) {
+        this.sortFilter?.setValue(sortBy);
+        this.sortDirFilter?.setValue(sortDir);
+        return this;
+    }
+
     addViewFilter(config = {}) {
         this.viewFilter = this.addFilter(`${this.id}-view`, {
             defaultValue: 'list',
