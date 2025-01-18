@@ -836,7 +836,9 @@ class ListResource extends Resource {
         this.setSelectedItems(items);
         const itemID = this.getItemId(item);
         this.selectedItemsById[itemID] = item;
-        this.signal(`item_selected_${itemID}`, true);
+        if (typeof itemID === 'string' || typeof itemID === 'number') {
+            this.signal(`item_selected_${itemID}`, true);
+        }
         if (callOnChange) {
             this.signal('selection_change', this.selectedItems);
         }
