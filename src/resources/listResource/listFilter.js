@@ -2,7 +2,7 @@
  * @typedef {import("./listFilterInterface").ListFilterInterface} ListFilterInterface
  */
 import { getService } from '@arpadroid/context';
-import { ObserverTool, mergeObjects, arrayEmpty, getURLParam } from '@arpadroid/tools';
+import { observerMixin, dummySignal, mergeObjects, arrayEmpty, getURLParam } from '@arpadroid/tools';
 
 class ListFilter {
     /** @type {(property: string, value: unknown) => void} signal */
@@ -18,7 +18,8 @@ class ListFilter {
      * @param {ListFilterInterface} config
      */
     constructor(id, config) {
-        ObserverTool.mixin(this);
+        this.signal = dummySignal;
+        observerMixin(this);
         this._id = id;
         this.setConfig(config);
         this._initializeProperties(id);

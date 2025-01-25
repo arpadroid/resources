@@ -2,7 +2,7 @@
  * @typedef {import('./resourceInterface').ResourceInterface} ResourceInterface
  * @typedef {import('@arpadroid/services').APIService} APIService
  */
-import { mergeObjects, ObserverTool } from '@arpadroid/tools';
+import { mergeObjects, observerMixin } from '@arpadroid/tools';
 import { getService } from '@arpadroid/context';
 
 export const resourceStore = {};
@@ -44,7 +44,7 @@ class Resource {
         /** @type {APIService} */
         this.apiService = getService('apiService');
         this._unsubscribes = [];
-        ObserverTool.mixin(this);
+        observerMixin(this);
         this.id = config?.id ?? this.constructor.name;
         this._initializePayload = this._initializePayload.bind(this);
         this.setConfig(config);

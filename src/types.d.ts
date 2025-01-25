@@ -1,6 +1,4 @@
-export { ListFilterInterface } from './resources/listResource/listFilterInterface.d.ts';
-export { ListResourceInterface } from './resources/listResource/listResourceInterface.d.ts';
-export { MessageResourceInterface } from './resources/messageResource/messageResourceInterface.d.ts';
-export { ResourceInterface } from './resources/resource/resourceInterface.d.ts';
-
-
+export { ListFilterInterface } from './resources/listResource/listFilterInterface';
+export { ListResourceInterface } from './resources/listResource/listResourceInterface';
+export { MessageResourceInterface } from './resources/messageResource/messageResourceInterface';
+export { ResourceInterface } from './resources/resource/resourceInterface';
