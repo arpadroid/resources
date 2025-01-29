@@ -1,5 +1,7 @@
 /**
- * @typedef {import("./listFilterInterface").ListFilterInterface} ListFilterInterface
+ * @typedef {import("./listFilter.types").ListFilterConfigType} ListFilterConfigType
+ * @typedef {import("./listFilter.types").ListFilterOptionType} ListFilterOptionType
+ * @typedef {import("./listFilter.types").ListFilterOptionsType} ListFilterOptionsType
  */
 import { getService } from '@arpadroid/context';
 import { observerMixin, dummySignal, mergeObjects, arrayEmpty, getURLParam } from '@arpadroid/tools';
@@ -15,7 +17,7 @@ class ListFilter {
     /**
      * The list filter constructor is awesome.
      * @param {string} id
-     * @param {ListFilterInterface} config
+     * @param {ListFilterConfigType} config
      */
     constructor(id, config) {
         this.signal = dummySignal;
@@ -25,20 +27,25 @@ class ListFilter {
         this._initializeProperties(id);
     }
 
-    _initializeProperties() {
-        this.key = this._config.alias || this._id;
-        this._isActive = false;
-    }
-
+    /**
+     * Sets the configuration for the list filter.
+     * @param {ListFilterConfigType} config
+     * @returns {ListFilter}
+     */
     setConfig(config = {}) {
-        /** @type {ListFilterInterface} */
+        /** @type {ListFilterConfigType} */
         this._config = mergeObjects(this.getDefaultConfig(), config);
         return this;
     }
 
+    _initializeProperties() {
+        this.key = this._config?.alias || this._id;
+        this._isActive = false;
+    }
+
     /**
      * Returns the default config for the list filter.
-     * @returns {ListFilterInterface}
+     * @returns {ListFilterConfigType}
      */
     getDefaultConfig() {
         return {
@@ -51,11 +58,21 @@ class ListFilter {
         };
     }
 
+    /**
+     * Sets the default value for the list filter.
+     * @param {unknown} value
+     * @returns {ListFilter}
+     */
     setDefaultValue(value) {
         this._config.defaultValue = value;
         return this;
     }
 
+    /**
+     * Sets the URL parameter name for the list filter.
+     * @param {boolean} isUrlFilter
+     * @returns {ListFilter}
+     */
     setURLFilter(isUrlFilter) {
         this._config.isURLFilter = isUrlFilter;
         return this;
@@ -71,6 +88,12 @@ class ListFilter {
         }
     }
 
+    /**
+     * Sets the value for the list filter.
+     * @param {unknown} value
+     * @param {boolean} callSubscribers
+     * @returns {ListFilter}
+     */
     setValue(value, callSubscribers = true) {
         const { callback, hasLocalStorage, preProcessValue } = this._config;
         if (typeof preProcessValue === 'function') {
@@ -169,7 +192,7 @@ class ListFilter {
 
     /**
      * Gets the URL value for the list filter.
-     * @returns {string}
+     * @returns {string | undefined}
      */
     getUrlValue() {
         return getURLParam(this.getUrlName(), window.location.href);
@@ -196,6 +219,10 @@ class ListFilter {
         return this._config.allowClear;
     }
 
+    /**
+     * Sets the allow clear value for the list filter.
+     * @param {boolean} allowClear
+     */
     setAllowClear(allowClear) {
         this._config.allowClear = allowClear;
     }
@@ -238,12 +265,16 @@ class ListFilter {
 
     /**
      * Sets options for the list filter to be used by the list component.
-     * @param {ListFilterInterface} options
+     * @param {ListFilterOptionsType} options
      */
     setOptions(options) {
         this._options = options;
     }
 
+    /**
+     * Gets the options for the list filter.
+     * @returns {ListFilterOptionsType}
+     */
     getOptions() {
         return this._options;
     }

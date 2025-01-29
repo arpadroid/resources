@@ -1,4 +1,13 @@
 {
-  "extends": "./node_modules/@arpadroid/arpadroid/tsconfig.json",
-  "include": ["src/**/*"]
+    "extends": "./node_modules/@arpadroid/arpadroid/tsconfig.json",
+    "compilerOptions": {
+        // "tsBuildInfoFile": ".tsbuildinfo"
+        "rootDir": "./src",
+        "outDir": "./.types",
+        "paths": {
+            "@arpadroid/services": ["./node_modules/@arpadroid/services/dist/@types/types.compiled.d.ts"],
+        }
+    },
+    "include": ["src/**/*"],
+    "exclude": ["node_modules", "**/*.test.ts", "**/*.stories.js", "**/*.test.js"]
 }

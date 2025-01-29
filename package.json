@@ -2,10 +2,9 @@
     "name": "@arpadroid/resources",
     "version": "0.0.1",
     "description": "Data management abstraction, resources and utilities",
-    "main": "dist/arpadroid-resources.js",
-    "module": "dist/arpadroid-resources.js",
+    "module": "./dist/arpadroid-resources.js",
+    "types": "./dist/@types/types.compiled.d.ts",
     "type": "module",
-    "types": "./dist/types.d.ts",
     "sideEffects": false,
     "scripts": {
         "build": "node ./node_modules/@arpadroid/arpadroid/scripts/build-project.mjs --project=resources --minify",
