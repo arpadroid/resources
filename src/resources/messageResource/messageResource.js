@@ -1,12 +1,12 @@
 /**
- * @typedef {import('../../types').MessageInterface} MessageInterface
- * @typedef {import('./messageResourceInterface').MessageResourceInterface} MessageResourceInterface
- * @typedef {import('../../types').AbstractContentInterface} AbstractContentInterface
+ * @typedef {import('./messageResource.types').MessageResourceConfigType} MessageResourceConfigType
+ * @typedef {import('./messageResource.types').MessageType} MessageType
+ * @typedef {import('@arpadroid/tools/src/common.types').AbstractContentInterface} AbstractContentInterface
  */
 import { observerMixin, mergeObjects } from '@arpadroid/tools';
 
 class MessageResource {
-    /** @type {Record<string, MessageInterface>} */
+    /** @type {Record<string, MessageType>} */
     _messagesById = {};
 
     /** @type {(property: string, value: unknown) => void} signal */
@@ -22,7 +22,7 @@ class MessageResource {
 
     /**
      * Sets the messenger config.
-     * @param {MessageResourceInterface} config
+     * @param {MessageResourceConfigType} config
      * @returns {MessageResource}
      */
     setConfig(config = {}) {
@@ -33,7 +33,7 @@ class MessageResource {
 
     /**
      * Returns the messenger config.
-     * @returns {MessageResourceInterface}
+     * @returns {MessageResourceConfigType}
      */
     getDefaultConfig() {
         return {
@@ -49,15 +49,20 @@ class MessageResource {
         this.addMessages(this._messages);
     }
 
+    /**
+     * Returns a message by id.
+     * @param {string} id
+     * @returns {MessageType}
+     */
     getById(id) {
         return this._messagesById[id];
     }
 
     /**
      * Adds a message.
-     * @param {MessageInterface} message
+     * @param {MessageType} message
      * @param {boolean} sendUpdate
-     * @returns {MessageInterface}
+     * @returns {MessageType}
      */
     addMessage(message = {}, sendUpdate = true) {
         message.id = message?.node?.id || message?.id || Symbol('UID');
@@ -73,6 +78,11 @@ class MessageResource {
         return this._messagesById[message.id];
     }
 
+    /**
+     * Updates a message.
+     * @param {string} id
+     * @param {MessageType} config
+     */
     updateMessage(id, config) {
         const message = this._messagesById[id];
         if (message) {
@@ -82,6 +92,12 @@ class MessageResource {
         }
     }
 
+    /**
+     * Registers a message.
+     * @param {MessageType} config
+     * @param {HTMLElement} node
+     * @returns {MessageType}
+     */
     registerMessage(config = {}, node) {
         const id = node?.id || config?.id;
         if (!this._messagesById[id]) {
@@ -93,8 +109,8 @@ class MessageResource {
     /**
      * Adds an info message.
      * @param {AbstractContentInterface} message
-     * @param {MessageInterface} config
-     * @returns {MessageInterface}
+     * @param {MessageType} config
+     * @returns {MessageType}
      */
     info(message, config = {}) {
         config.content = message;
@@ -105,8 +121,8 @@ class MessageResource {
     /**
      * Adds an error message.
      * @param {AbstractContentInterface} message
-     * @param {MessageInterface} config
-     * @returns {MessageInterface}
+     * @param {MessageType} config
+     * @returns {MessageType}
      */
     error(message, config = {}) {
         config.content = message;
@@ -117,8 +133,8 @@ class MessageResource {
     /**
      * Adds an warning message.
      * @param {AbstractContentInterface} message
-     * @param {MessageInterface} config
-     * @returns {MessageInterface}
+     * @param {MessageType} config
+     * @returns {MessageType}
      */
     warning(message, config = {}) {
         config.content = message;
@@ -129,8 +145,8 @@ class MessageResource {
     /**
      * Adds an success message.
      * @param {AbstractContentInterface} message
-     * @param {MessageInterface} config
-     * @returns {MessageInterface}
+     * @param {MessageType} config
+     * @returns {MessageType}
      */
     success(message, config = {}) {
         config.content = message;
@@ -140,7 +156,7 @@ class MessageResource {
 
     /**
      * Adds messages to the messenger.
-     * @param {MessageInterface[]} messages
+     * @param {MessageType[]} messages
      * @returns {MessageResource}
      * @throws {Error} If messages is not an array.
      */
@@ -157,6 +173,7 @@ class MessageResource {
      * @returns {MessageResource}
      */
     deleteMessages() {
+        /** @type {MessageType[]} */
         this._messages = [];
         this._messagesById = {};
         this.signal('delete_messages', this._messages);
@@ -169,7 +186,7 @@ class MessageResource {
 
     /**
      * Deletes a message.
-     * @param {MessageInterface} message
+     * @param {MessageType} message
      * @param {boolean} sendUpdate
      */
     deleteMessage(message, sendUpdate = true) {

@@ -334,6 +334,13 @@ class ListResource extends Resource {
         this.isStatic() && this.fetch();
     }
 
+    /**
+     * Adds an item to the list.
+     * @param {ListResourceItemType} item
+     * @param {boolean} sendUpdate
+     * @param {boolean} unshift
+     * @returns {ListResourceItemType}
+     */
     addItem(item = {}, sendUpdate = true, unshift = false) {
         this.removeItem(item, false);
         this.preProcessItem(item);
@@ -370,6 +377,12 @@ class ListResource extends Resource {
         return this.itemsById[id];
     }
 
+    /**
+     * Adds multiple items to the list.
+     * @param {ListResourceItemType[]} items
+     * @param {boolean} sendUpdate
+     * @param {boolean} unshift
+     */
     addItems(items, sendUpdate = true, unshift = false) {
         items.map(item => this.addItem(item, false, unshift));
         if (sendUpdate) {
@@ -496,7 +509,12 @@ class ListResource extends Resource {
         return editURL(window.location.href.replace(window.location.origin, ''), filters, encode);
     }
 
+    /**
+     * Returns the URL to clear the filters.
+     * @returns {string}
+     */
     getClearFiltersURL() {
+        /** @type {Record<string, any>} */
         const filters = {};
         Object.keys(this.filters).map(filterKey => {
             const filter = this.filters[filterKey];
@@ -902,6 +920,12 @@ class ListResource extends Resource {
         return value;
     }
 
+    /**
+     * Adds selections to the list.
+     * @param {ListResourceItemType[]} items
+     * @param {boolean} callOnChange
+     * @returns {this}
+     */
     addSelections(items, callOnChange = true) {
         const $items = this.getSelectedItems();
         items.map(item => this.selectItem(item, $items, false));

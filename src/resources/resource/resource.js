@@ -1,10 +1,13 @@
 /**
- * @typedef {import('./resourceInterface').ResourceInterface} ResourceInterface
+ * @typedef {import('./resource.types').ResourceConfigType} ResourceConfigType
+ * @typedef {import('./resource.types').ResourceResponseType} ResourceResponseType
+ * @typedef {import('./resource.types').ResourcePayloadType} ResourcePayloadType
  * @typedef {import('@arpadroid/services').APIService} APIService
  */
 import { mergeObjects, observerMixin } from '@arpadroid/tools';
 import { getService } from '@arpadroid/context';
 
+/** @type {Record<string, unknown>} */
 export const resourceStore = {};
 
 /**
@@ -63,12 +66,21 @@ class Resource {
         return this;
     }
 
+    /**
+     * Sets the configuration of the resource.
+     * @param {ResourceConfigType | Record<string, never>} config
+     * @returns {Resource}
+     */
     setConfig(config = {}) {
         /** @type {ResourceInterface} */
         this._config = mergeObjects(this.getDefaultConfig(), config);
         return this;
     }
 
+    /**
+     * Returns the default configuration of the resource.
+     * @returns {ResourceConfigType}
+     */
     getDefaultConfig() {
         return {
             payload: {},
@@ -95,6 +107,11 @@ class Resource {
         }
     }
 
+    /**
+     * Fetching.
+     * @param {...any} args
+     * @returns {Promise<ResourceResponseType> | undefined}
+     */
     fetch(...args) {
         if (this.isReady) {
             this.isReady = false;
@@ -114,6 +131,11 @@ class Resource {
         return this.request;
     }
 
+    /**
+     * Fetches the resource consecutively.
+     * @param {...any} args
+     * @returns {Promise<ResourceResponseType>}
+     */
     fetchConsecutive(...args) {
         return this._fetch(...args)
             .then(() =>
@@ -157,6 +179,10 @@ class Resource {
         return this._url;
     }
 
+    /**
+     * Returns the headers of the resource.
+     * @returns {Headers | undefined}
+     */
     getHeaders() {
         return {};
     }
@@ -210,6 +236,11 @@ class Resource {
         this.signal('ready', true);
     }
 
+    /**
+     * Updates the payload of the resource.
+     * @param {ResourcePayloadType} payload
+     * @returns {Promise<ResourcePayloadType>}
+     */
     update(payload) {
         this._payload = Object.assign(this._payload, payload);
         return this._initializePayload(this._payload);
@@ -219,6 +250,12 @@ class Resource {
      * Polling.
      */
 
+    /**
+     * Polls the resource.
+     * @param {(payload: ResourcePayloadType) => void} onComplete
+     * @param {(payload: ResourcePayloadType) => boolean} mustStopPollingCb
+     * @param {number} interval
+     */
     poll(onComplete, mustStopPollingCb, interval = 5000) {
         if (interval < 2000) {
             interval = 2000;
