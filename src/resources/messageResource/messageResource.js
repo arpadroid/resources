@@ -3,18 +3,14 @@
  * @typedef {import('./messageResource.types').MessageType} MessageType
  * @typedef {import('@arpadroid/tools/src/common.types').AbstractContentInterface} AbstractContentInterface
  */
-import { observerMixin, mergeObjects } from '@arpadroid/tools';
+import { observerMixin, mergeObjects, dummySignal } from '@arpadroid/tools';
 
 class MessageResource {
     /** @type {Record<string, MessageType>} */
     _messagesById = {};
 
-    /** @type {(property: string, value: unknown) => void} signal */
-    signal;
-    /** @type {(property: string, callback: () => unknown) => () => void} */
-    on;
-
     constructor(config = {}) {
+        this.signal = dummySignal;
         observerMixin(this);
         this.setConfig(config);
         this._initialize();
@@ -65,17 +61,17 @@ class MessageResource {
      * @returns {MessageType}
      */
     addMessage(message = {}, sendUpdate = true) {
-        message.id = message?.node?.id || message?.id || Symbol('UID');
+        message.id = String(message?.node?.id || message?.id) || Symbol('UID');
         if (typeof message.type === 'undefined') {
             message.type = 'info';
         }
         message.resource = this;
-        this._messagesById[message.id] = message;
-        this._messages.push(message);
+        this._messagesById[String(message.id)] = message;
+        this._messages?.push(message);
         if (sendUpdate) {
             this.signal('add_message', message);
         }
-        return this._messagesById[message.id];
+        return this._messagesById[String(message.id)];
     }
 
     /**
@@ -88,7 +84,7 @@ class MessageResource {
         if (message) {
             mergeObjects(message, config);
             message?.node?.setConfig(message);
-            message?.reRender();
+            message?.node?.reRender();
         }
     }
 
@@ -99,9 +95,9 @@ class MessageResource {
      * @returns {MessageType}
      */
     registerMessage(config = {}, node) {
-        const id = node?.id || config?.id;
+        const id = String(node?.id || config?.id);
         if (!this._messagesById[id]) {
-            return this.addMessage({...config, node}, false);
+            return this.addMessage({ ...config, node }, false);
         }
         return this._messagesById[id];
     }
@@ -190,12 +186,13 @@ class MessageResource {
      * @param {boolean} sendUpdate
      */
     deleteMessage(message, sendUpdate = true) {
-        if (this._messagesById[message.id]) {
-            const index = this._messages.findIndex(({ id }) => id === message.id);
+        const id = String(message.id);
+        if (this._messagesById[id] && this._messages) {
+            const index = this._messages?.findIndex(({ id }) => id === message.id);
             if (index > -1) {
                 this._messages.splice(index, 1);
             }
-            delete this._messagesById[message.id];
+            delete this._messagesById[id];
             if (sendUpdate) {
                 this.signal('delete_message', message);
             }

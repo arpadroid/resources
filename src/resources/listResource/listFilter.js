@@ -4,11 +4,14 @@
  * @typedef {import("./listFilter.types").ListFilterOptionsType} ListFilterOptionsType
  */
 import { getService } from '@arpadroid/context';
-import { observerMixin, dummySignal, mergeObjects, arrayEmpty, getURLParam } from '@arpadroid/tools';
+import { observerMixin, mergeObjects, arrayEmpty, getURLParam } from '@arpadroid/tools';
+import { dummySignal, dummyListener } from '@arpadroid/tools';
 
 class ListFilter {
-
+    /** @type {ListFilterOptionsType}  */
     _options = [];
+    /** @type {ListFilterConfigType} */
+    _config = {};
 
     /**
      * The list filter constructor is awesome.
@@ -17,10 +20,11 @@ class ListFilter {
      */
     constructor(id, config) {
         this.signal = dummySignal;
+        this.on = dummyListener;
         observerMixin(this);
         this._id = id;
         this.setConfig(config);
-        this._initializeProperties(id);
+        this._initializeProperties();
     }
 
     /**
@@ -119,6 +123,7 @@ class ListFilter {
 
     setIsActive() {
         const { allowClear, defaultValue, isRequestFilter } = this._config;
+        // @ts-ignore
         const areEmptyArrays = arrayEmpty(this.value) && arrayEmpty(defaultValue);
         if (
             typeof this.value === 'undefined' ||
@@ -169,7 +174,7 @@ class ListFilter {
      * @returns {boolean}
      */
     isActive() {
-        return this._isActive;
+        return Boolean(this._isActive);
     }
 
     /**
@@ -179,7 +184,8 @@ class ListFilter {
     getSavedValue() {
         if (this._config.hasLocalStorage) {
             try {
-                return JSON?.parse(localStorage.getItem(this._id));
+                const item = localStorage.getItem(this._id);
+                return item ? JSON.parse(item) : undefined;
             } catch (error) {
                 console.error(error);
             }

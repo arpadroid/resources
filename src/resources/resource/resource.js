@@ -4,7 +4,7 @@
  * @typedef {import('./resource.types').ResourcePayloadType} ResourcePayloadType
  * @typedef {import('@arpadroid/services').APIService} APIService
  */
-import { mergeObjects, observerMixin } from '@arpadroid/tools';
+import { dummyListener, dummyOff, dummySignal, mergeObjects, observerMixin } from '@arpadroid/tools';
 import { getService } from '@arpadroid/context';
 
 /** @type {Record<string, unknown>} */
@@ -29,24 +29,30 @@ export function removeResource(id) {
 }
 
 class Resource {
-    request;
-    requestHeaders = null;
-    isReady = true;
-    hasFailed;
+    hasFailed = false;
     hasFetched = false;
+    isReady = true;
+    /** @type {Promise<ResourcePayloadType> | undefined} */
+    promise;
+    /** @type {Promise<ResourceResponseType> | undefined} */
+    request;
+    /** @type {Headers | undefined} */
+    requestHeaders;
     pollCount = 0;
-    _url;
 
-    /** @type {(property: string, value: unknown) => void} signal */
-    signal;
-
-    /** @type {(property: string, callback: () => unknown) => () => void} on */
-    on;
-
+    /**
+     * Creates a new resource.
+     * @param {string} url
+     * @param {ResourceConfigType | Record<string, never>} config
+     */
     constructor(url, config = {}) {
         /** @type {APIService} */
         this.apiService = getService('apiService');
+        /** @type {(() => void)[]} */
         this._unsubscribes = [];
+        this.signal = dummySignal;
+        this.on = dummyListener;
+        this.off = dummyOff;
         observerMixin(this);
         this.id = config?.id ?? this.constructor.name;
         this._initializePayload = this._initializePayload.bind(this);
@@ -56,11 +62,22 @@ class Resource {
         resourceStore[this.id] = this;
     }
 
+    /**
+     * Sets the URL of the resource.
+     * @param {string} url
+     * @returns {Resource}
+     */
     setUrl(url) {
+        /** @type {string} */
         this._url = url;
         return this;
     }
 
+    /**
+     * Sets the payload of the resource.
+     * @param {ResourcePayloadType} payload
+     * @returns {Resource}
+     */
     setPayload(payload) {
         this._payload = payload;
         return this;
@@ -72,8 +89,7 @@ class Resource {
      * @returns {Resource}
      */
     setConfig(config = {}) {
-        /** @type {ResourceInterface} */
-        this._config = mergeObjects(this.getDefaultConfig(), config);
+        this._config = mergeObjects(this.getDefaultConfig(), config) || {};
         return this;
     }
 
@@ -83,6 +99,7 @@ class Resource {
      */
     getDefaultConfig() {
         return {
+            url: '',
             payload: {},
             query: {},
             pollInterval: 5000,
@@ -103,7 +120,7 @@ class Resource {
         this._onComplete = this._onComplete.bind(this);
         this._payload = {};
         if (Object.keys(this._config?.payload ?? {}).length) {
-            this._initializePayload(this._config.payload);
+            this._initializePayload(this._config?.payload);
         }
     }
 
@@ -117,10 +134,11 @@ class Resource {
             this.isReady = false;
             this.signal('ready', false);
             this.signal('fetch');
-            if (this._config.mode === 'consecutive') {
+            if (this._config?.mode === 'consecutive') {
                 this.request = this.fetchConsecutive(...args);
                 return this.request;
             }
+            /** @type {Promise<any>[]} */
             const promises = this.fetchPromises();
             promises.unshift(this._fetch(...args));
             this.request = Promise.all(promises)
@@ -144,34 +162,57 @@ class Resource {
                     .catch(this._onError)
                     .finally(this._onComplete)
             )
-            .catch(error => this.onFetchError(error));
+            .catch(error => this._onError(error));
     }
 
-    async _fetch() {
+    /**
+     * Fetches main resource.
+     * @param {...any} args
+     * @returns {Promise<ResourceResponseType>}
+     */
+    // eslint-disable-next-line no-unused-vars
+    async _fetch(...args) {
         const headers = this.getHeaders();
+
+        /**
+         * OnFetchCompleted callback.
+         * @param {ResourceResponseType} payload
+         * @returns {Promise<ResourcePayloadType>}
+         */
+        const onFetchCompleted = async payload => {
+            const validResponse = this.validateResourcePayload(payload);
+            if (validResponse !== true) {
+                return Promise.reject(validResponse);
+            }
+            return this._initializePayload(payload, headers);
+        };
+
         return this.apiService
             .fetch(this.getURL(), {
                 query: this.getQuery(),
                 headers
             })
-            .then(async payload => {
-                const validResponse = this.validateResourcePayload(payload);
-                if (validResponse !== true) {
-                    return Promise.reject(validResponse);
-                }
-                return this._initializePayload(payload, headers);
-            });
+            .then(onFetchCompleted);
     }
 
     /**
      * Sets the fetch function to be used by the resource.
-     * @param {Promise<any>} fetch
+     * @param {() => Promise<any>} fetch
      */
     setFetch(fetch) {
-        this._config.fetch = fetch;
+        this._config && (this._config.fetch = fetch);
     }
 
-    validateResourcePayload() {
+    /**
+     * Validates the payload of the resource.
+     * @param {ResourceResponseType} payload
+     * @returns {boolean | string}
+     */
+    validateResourcePayload(payload) {
+        console.log(
+            'Override validateResourcePayload method to validate the payload of the resource.',
+            payload
+        );
         return true;
     }
 
@@ -184,33 +225,54 @@ class Resource {
      * @returns {Headers | undefined}
      */
     getHeaders() {
-        return {};
+        return;
     }
 
     getQuery() {
-        return this._config.query;
+        return this._config?.query;
     }
 
     fetchPromises() {
         return [];
     }
 
-    async _initializePayload(response = {}, headers = {}) {
-        this._payload = this._getPayload(response);
+    /**
+     * Initializes the payload of the resource.
+     * @param {ResourcePayloadType} payload
+     * @param {Headers | undefined} [headers]
+     * @returns {Promise<ResourcePayloadType>}
+     */
+    async _initializePayload(payload = {}, headers) {
+        this._payload = this._getPayload(payload);
         this._payload = this._preprocessPayload(this._payload);
+        /** @type {Headers | null} */
         this.requestHeaders = headers;
         this.signal('payload', this._payload);
         return this._payload;
     }
 
+    /**
+     * Returns the payload from the response.
+     * @param {ResourceResponseType & ResourcePayloadType} response
+     * @returns {ResourcePayloadType}
+     */
     _getPayload(response) {
         return response?.value?.payload ?? response?.payload ?? response;
     }
 
+    /**
+     * Preprocesses the payload before setting it to the resource.
+     * @param {ResourcePayloadType} payload
+     * @returns {ResourcePayloadType}
+     */
     _preprocessPayload(payload) {
         return payload;
     }
 
+    /**
+     * Returns the payload of the resource.
+     * @returns {ResourcePayloadType}
+     */
     getPayload() {
         return { ...this._payload };
     }
@@ -222,7 +284,7 @@ class Resource {
 
     _onError(response = {}) {
         this.hasFailed = true;
-        if (this._config.showLogs) {
+        if (this._config?.showLogs) {
             console.error('ERROR FETCHING PAYLOAD:', this, response);
         }
         this.signal('ERROR', response);
@@ -230,7 +292,7 @@ class Resource {
     }
 
     _onComplete() {
-        setTimeout(() => (this.isReady = true), this._config.debounceFetch);
+        setTimeout(() => (this.isReady = true), this._config?.debounceFetch);
         this.isReady = true;
         this.hasFetched = true;
         this.signal('ready', true);
@@ -257,9 +319,7 @@ class Resource {
      * @param {number} interval
      */
     poll(onComplete, mustStopPollingCb, interval = 5000) {
-        if (interval < 2000) {
-            interval = 2000;
-        }
+        if (interval < 2000) interval = 2000;
         return new Promise((_resolve_, reject) => {
             if (!this.pollTimeout) {
                 this._onPollCompleted = onComplete;
@@ -278,7 +338,7 @@ class Resource {
     }
 
     _poll() {
-        return this.fetch().finally(() => this._onPollComplete());
+        return this.fetch()?.finally(() => this._onPollComplete());
     }
 
     _onPollComplete() {
@@ -288,25 +348,25 @@ class Resource {
                 this._onPollCompleted(this._payload);
             }
         } else {
-            this.pollTimeout = setTimeout(() => this._poll(), this._config.pollInterval);
+            this.pollTimeout = setTimeout(() => this._poll(), this._config?.pollInterval);
         }
     }
 
     _mustStopPolling() {
         return (
             (this._mustStopPollingCb && this._mustStopPollingCb(this._payload)) ||
-            this.pollCount > this._config.maxPollCount
+            this.pollCount > Number(this._config?.maxPollCount)
         );
     }
 
     async onLoad() {
-        if (this.hasFetched || !this.promise || this._items?.length) {
+        if (this.hasFetched || !this.promise) {
             return Promise.resolve();
         }
         return new Promise(resolve => {
             const kill = this.on('ready', () => {
-                resolve();
-                kill();
+                resolve(true);
+                kill && kill();
             });
         });
     }
