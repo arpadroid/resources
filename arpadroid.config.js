@@ -1,5 +1,5 @@
 const config = {
     deps: [],
-    buildTypes: false
+    buildTypes: true
 };
 export default config;

@@ -89,8 +89,17 @@ class Resource {
      * @returns {Resource}
      */
     setConfig(config = {}) {
-        this._config = mergeObjects(this.getDefaultConfig(), config) || {};
+        this._config = this._setConfig(config);
         return this;
+    }
+
+    /**
+     * Merges the default configuration with the provided configuration.
+     * @param {ResourceConfigType | Record<string, never>} [config]
+     * @returns {ResourceConfigType}
+     */
+    _setConfig(config = {}) {
+        return mergeObjects(this.getDefaultConfig(), config) || {};
     }
 
     /**
@@ -188,6 +197,7 @@ class Resource {
         };
 
         return this.apiService
+            // @ts-ignore
             .fetch(this.getURL(), {
                 query: this.getQuery(),
                 headers

@@ -1,36 +1,59 @@
 /**
- * @typedef {import('./listFilterInterface').ListFilterInterface} ListFilterInterface
  * @typedef {import('@arpadroid/services').Router} Router
- * @typedef {import('./listResourceInterface.js').ListResourceInterface} ListResourceInterface
+ * @typedef {import('./listFilter.types').ListFilterConfigType} ListFilterConfigType
+ * @typedef {import('./listResource.types').ListResourceConfigType} ListResourceConfigType
+ * @typedef {import('./listResource.types').ListResourceItemType} ListResourceItemType
  */
 import { editURL, sortObjectArrayByKey, searchObjectArray, paginateArray } from '@arpadroid/tools';
 import Resource, { removeResource } from '../resource/resource.js';
 import ListFilter from './listFilter.js';
-
+import { getService } from '@arpadroid/context';
+/**
+ * @class
+ * @property {ListResourceConfigType} _config - The list resource configuration.
+ */
 class ListResource extends Resource {
+    //////////////////////////////
     // #region INITIALIZATION
+    //////////////////////////////
+    /** @override @type {ListResourceConfigType} */
+
+    /**
+     * Creates a new ListResource instance.
+     * @param {ListResourceConfigType} config
+     */
     constructor(config = {}) {
         super('', config);
     }
-    _initializeProperties(config = {}) {
-        super._initializeProperties(config);
-        this.items = [];
-        this.itemsById = {};
-        this.rawItemsById = {};
-        this.itemIdMap = 'id';
-        this.filters = {};
-        this.hasActiveFilter = false;
-        this.selectedItems = [];
-        this.selectedItemsById = {};
-    }
 
-    isStatic() {
-        return this._config.isStatic ?? !this._config.url;
+    _initializeProperties() {
+        // /** @type {ListResourceConfigType | Record<string, never>} */
+        // this._config = {};
+        /** @type {Record<string, ListFilter>} */
+        this.filters = {};
+        /** @type {ListResourceItemType[]} */
+        this.items = [];
+        /** @type {Record<string, ListResourceItemType>} */
+        this.rawItemsById = {};
+        /** @type {Record<string, ListResourceItemType>} */
+        this.itemsById = {};
+        /** @type {ListResourceItemType[]} */
+        this.selectedItems = [];
+        /** @type {Record<string, ListResourceItemType>} */
+        this.selectedItemsById = {};
+        this.itemIdMap = 'id';
+        this.hasActiveFilter = false;
+        this.selectionKey = '';
+        this.selectionLengthKey = '';
+        this.selectionRedirectKey = '';
+        super._initializeProperties();
+        /** @type {Router} */
+        this.router = getService('router');
     }
 
     /**
      * Returns the default configuration for the list resource.
-     * @returns {ListResourceInterface}
+     * @returns {ListResourceConfigType}
      */
     getDefaultConfig() {
         return {
@@ -43,7 +66,6 @@ class ListResource extends Resource {
             isStatic: undefined,
             itemsPerPage: 0,
             listComponent: undefined,
-            mapItemId: undefined,
             pageParam: 'page',
             perPageParam: 'perPage',
             preProcessItem: undefined,
@@ -53,48 +75,28 @@ class ListResource extends Resource {
             sortByParam: 'sortBy',
             sortDirParam: 'sortDir',
             totalItems: 0,
-            totalPages: 0,
+            totalPages: 0
         };
     }
 
     // #endregion
 
-    // #region ACCESSORS
+    ///////////////////////////////
+    // #region Get
+    ///////////////////////////////
 
-    setContext() {}
-
-    getContext() {}
-
+    /**
+     * Returns the list component.
+     * @returns {HTMLElement | undefined}
+     */
     getComponent() {
-        return this._config.listComponent;
+        return this._config?.listComponent;
     }
 
-    isCollapsed() {
-        return this._config.isCollapsed;
-    }
-
-    hasToggleSave() {
-        return this._config.hasToggleSave;
-    }
-
-    hasSelectionSave() {
-        return this._config.hasSelectionSave;
-    }
-
-    hasSelection() {
-        return this._config.hasSelection;
-    }
-
-    getCurrentPage() {
-        return Number(this.pageFilter?.getValue() ?? this._config.currentPage);
-    }
-
-    setCurrentPage(page) {
-        this.pageFilter.setValue(page);
-        this._config.currentPage = page;
-        return this;
-    }
-
+    /**
+     * Returns the current item index range.
+     * @returns {number[]}
+     */
     getItemRange() {
         const currentPage = this.getPage();
         const itemsPerPage = this.getPerPage();
@@ -114,38 +116,144 @@ class ListResource extends Resource {
         return [start, end];
     }
 
+    /**
+     * Returns the number of items per page.
+     * @returns {number}
+     */
     getPerPage() {
-        return Number(this?.perPageFilter?.getValue() ?? this._config.itemsPerPage ?? this._payload?.perPage);
+        return Number(
+            this?.perPageFilter?.getValue() ?? this._config?.itemsPerPage ?? this._payload?.perPage
+        );
     }
 
+    /**
+     * Returns the current page.
+     * @param {Record<string, any>} payload
+     * @returns {number}
+     */
     getPage(payload = this._payload) {
         return payload?.page ?? this.getCurrentPage();
     }
 
+    getCurrentPage() {
+        return Number(this.pageFilter?.getValue() ?? this._config?.currentPage);
+    }
+
+    /**
+     * Returns the total number of pages.
+     * @param {Record<string, any>} payload
+     * @returns {number}
+     */
     getTotalPages(payload = this._payload) {
         if (this.isStatic()) {
             const query = this.searchFilter?.getValue();
-            const length = (query && this.staticQueryCount) || this.items.length;
+            const length = Number((query && this.staticQueryCount) || this.items?.length);
             return Math.ceil(length / this.getPerPage());
         }
-        return payload?.totalPages ?? this._config.totalPages;
+        return payload?.totalPages ?? this._config?.totalPages;
     }
 
     getSortDirection() {
         return this?.sortDirFilter?.getValue() ?? this._payload?.defaultSorting?.order;
     }
 
-    hasResults() {
-        return this._payload.output?.find(item => item.code === 'no-results') == undefined;
+    /**
+     * Returns the filter's payload.
+     * @param {string} filterId
+     * @returns {Record<string, any>}
+     */
+    getFilterPayload(filterId) {
+        return this?._payload?.filters[filterId];
     }
 
-    mapItem(callback) {
-        this._config.preProcessItem = callback;
+    // #endregion Get
+
+    ///////////////////////////////
+    // #region Is
+    ///////////////////////////////
+
+    isStatic() {
+        return this._config && (this._config?.isStatic ?? !this._config.url);
+    }
+
+    isCollapsed() {
+        return this._config?.isCollapsed;
+    }
+
+    /**
+     * Returns whether the filter is active.
+     * @param {string} filterId
+     * @returns {boolean}
+     */
+    isFilterActive(filterId) {
+        const payload = this.getFilterPayload(filterId);
+        return payload?.isActive ?? this.getFilter(filterId)?.isActive();
+    }
+
+    // #endregion Is
+
+    ///////////////////////////////
+    // #region Has
+    ///////////////////////////////
+
+    hasToggleSave() {
+        return this._config?.hasToggleSave;
+    }
+
+    hasSelectionSave() {
+        return this._config?.hasSelectionSave;
+    }
+
+    hasSelection() {
+        return Boolean(this._config?.hasSelection);
+    }
+
+    hasResults() {
+        /**
+         * Finds the item with the code 'no-results'.
+         * @param {ListResourceItemType} item
+         * @returns {boolean}
+         */
+        const findItem = item => item.code === 'no-results';
+        return this._payload.output?.find(findItem) == undefined;
+    }
+
+    // #endregion Has
+
+    ///////////////////////////////
+    // #region Set
+    ///////////////////////////////
+
+    /**
+     * Sets the current page.
+     * @param {number} page
+     * @returns {this}
+     */
+    setCurrentPage(page) {
+        this.pageFilter?.setValue(page);
+        this._config && (this._config.currentPage = page);
         return this;
     }
 
+    /**
+     * Sets a callback to process the HTML node once it's created.
+     * @param {(node: HTMLElement) => HTMLElement} callback
+     * @returns {this}
+     */
     setPreProcessNode(callback) {
-        this._config.preProcessNode = callback;
+        this._config && (this._config.preProcessNode = callback);
+        return this;
+    }
+
+    // #endregion Set
+
+    /**
+     * Sets an item map function to process the item's payload.
+     * @param {(itemPayload: ListResourceItemType) => ListResourceItemType} callback
+     * @returns {this}
+     */
+    mapItem(callback) {
+        this._config && (this._config.preProcessItem = callback);
         return this;
     }
 
@@ -168,22 +276,20 @@ class ListResource extends Resource {
         return this.prevFilterSignature !== this.filterSignature;
     }
 
-    getFilterPayload(filterId) {
-        return this?._payload?.filters[filterId];
-    }
-
-    isFilterActive(filterID) {
-        const payload = this.getFilterPayload(filterID);
-        return payload?.isActive ?? this.getFilter(filterID)?.isActive();
-    }
-
     // #endregion
 
+    //////////////////////////
     // #region RESOURCE API.
+    //////////////////////////
 
+    /**
+     * Fetches the list items.
+     * @param {[]} args
+     * @returns {Promise<any> | undefined}
+     */
     fetch(...args) {
-        const rv = this.isStatic() ? this._fetchStatic(args) : super.fetch(...args);
-        rv && this.initializeFilters(...args);
+        const rv = this.isStatic() ? this._fetchStatic.apply(this, args) : super.fetch(...args);
+        rv && this.initializeFilters.apply(this, args);
         return rv;
     }
 
@@ -194,26 +300,24 @@ class ListResource extends Resource {
     }
 
     handleRouteChange() {
-        /** @type {Router} */
-        const router = this._config?.router;
         const onRouteChanged = () => this.haveFiltersChanged() && this.fetch();
-        router?.on('route_change', onRouteChanged, this._unsubscribes);
+        this.router?.on('route_change', onRouteChanged, this._unsubscribes);
     }
 
     getQuery() {
         return {
-            ...this.resourceParams,
+            ...(this._config?.query || {}),
             ...this.getFilterQueryParams()
         };
     }
 
-    setIsProcessing(value) {
-        this.isProcessing = value;
-        this.signal('PROCESSING', value);
-        return this;
-    }
-
+    /**
+     * Runs a search query.
+     * @param {string} value
+     * @returns {Promise<any> | undefined}
+     */
     search(value) {
+        // @ts-ignore
         return this.fetch({ search: value });
     }
 
@@ -221,6 +325,11 @@ class ListResource extends Resource {
         return this.items ?? [];
     }
 
+    /**
+     * Returns the items from the payload.
+     * @param {Record<string, any>} payload
+     * @returns {ListResourceItemType[]}
+     */
     getItemsFromPayload(payload = {}) {
         if (Array.isArray(payload)) {
             return payload;
@@ -241,18 +350,28 @@ class ListResource extends Resource {
         return payload?.resultCount ?? this.items?.length ?? 0;
     }
 
-    async _initializePayload(payload = {}, headers = {}, update = true) {
+    /**
+     * Initializes the payload.
+     * @param {Record<string, any>} payload
+     * @param {Headers} [headers]
+     * @param {boolean} update
+     * @returns {Promise<Record<string, any>>}
+     */
+    async _initializePayload(payload = {}, headers, update = true) {
         payload = await super._initializePayload(payload, headers);
         const items = this.getItemsFromPayload(payload);
         this.items = this.preProcessItems(items);
         payload.items = this.items;
-        this._config.totalItems = this.getTotalItems(payload);
-        this._config.totalPages = this.getTotalPages(payload);
-        this._config.perPage = this.getPerPage(payload);
-        if (this.pageFilter) {
-            this._config.currentPage = parseInt(this.pageFilter.getValue(), 10) || 1;
+        if (this._config) {
+            this._config.totalItems = this.getTotalItems(payload);
+            this._config.totalPages = this.getTotalPages(payload);
+            this._config.perPage = this.getPerPage();
+            if (this.pageFilter) {
+                this._config.currentPage = Number(this.pageFilter.getValue()) || 1;
+            }
+            this.perPageFilter && (this._config.perPage = Number(this.perPageFilter.getValue()));
         }
-        this.perPageFilter && (this._config.perPage = this.perPageFilter.getValue());
+
         this.initializeSelectedItems();
         if (update) {
             const signalItems = () => {
@@ -271,14 +390,20 @@ class ListResource extends Resource {
     // #region Static API
     //////////////////////////
 
+    /**
+     * Paginates and sorts items from a list statically, when storage is in memory.
+     * @returns {ListResourceItemType[] | undefined}
+     */
     _getItems() {
         if (!this.isStatic()) return this.items;
-        const { searchFields } = this._config;
+        /** @type {string[]} */
+        const searchFields = this._config?.searchFields;
         const query = this.searchFilter?.getValue();
+        /** @type {ListResourceItemType[] | any} */
         let items = searchObjectArray(this.items, query, searchFields);
         this.staticQueryCount = items.length;
         const sortBy = this.sortFilter?.getValue();
-        items = sortObjectArrayByKey(items, sortBy, this.sortDirFilter?.getValue());
+        items = sortObjectArrayByKey(items, String(sortBy), String(this.sortDirFilter?.getValue()));
         items = paginateArray(items, this.getPerPage(), this.getCurrentPage());
         this.staticItems = items;
         return items;
@@ -298,25 +423,30 @@ class ListResource extends Resource {
 
     refresh(refreshFilters = true) {
         if (refreshFilters) {
-            const { router } = this._config;
             const filtersURL = this.getFiltersURL(false);
-            router?.go(filtersURL);
+            this.router?.go(filtersURL);
         }
         return this.fetch() ?? this.request;
     }
 
     hasNoItems() {
-        return Boolean(this.isReady && !this._getItems().length);
+        return Boolean(this.isReady && !this._getItems()?.length);
     }
 
     hasItems() {
-        return Boolean(this.isReady && this._getItems().length);
+        return Boolean(this.isReady && this._getItems()?.length);
     }
 
+    /**
+     * Toggles the list.
+     * @param {boolean} [state]
+     * @returns {this}
+     */
     toggleList(state) {
-        this._config.isCollapsed = typeof state !== 'undefined' ? state : !this.isCollapsed();
+        this._config &&
+            (this._config.isCollapsed = typeof state !== 'undefined' ? state : !this.isCollapsed());
         if (this.hasToggleSave()) {
-            this.toggleListFilter.setValue(!this.isCollapsed());
+            this.toggleListFilter?.setValue(!this.isCollapsed());
         }
         this.signal('TOGGLE', this.isCollapsed());
         return this;
@@ -326,6 +456,10 @@ class ListResource extends Resource {
 
     // #region ITEM API
 
+    /**
+     * Sets the items.
+     * @param {ListResourceItemType[]} items
+     */
     setItems(items) {
         this.items = items.map(item => this.preProcessItem(item));
         const _items = this._getItems();
@@ -345,11 +479,11 @@ class ListResource extends Resource {
         this.removeItem(item, false);
         this.preProcessItem(item);
         if (unshift) {
-            this.items.unshift(item);
+            this.items?.unshift(item);
         } else {
-            this.items.push(item);
+            this.items?.push(item);
         }
-        this._config.totalItems++;
+        this._config && this._config.totalItems++;
         if (sendUpdate) {
             this.signal('add_item', item, unshift);
             this.signal('items_updated', this._getItems());
@@ -357,19 +491,26 @@ class ListResource extends Resource {
         return item;
     }
 
-    registerItem(payload = {}, node) {
-        const { id } = payload;
-        const _item = this.items.find(item => item.node === node);
-        if (_item) {
-            return _item;
-        }
-        const { preProcessNode } = this._config;
+    /**
+     * Registers an item with a node.
+     * @param {ListResourceItemType} payload
+     * @param {HTMLElement} node
+     * @returns {ListResourceItemType}
+     */
+    registerItem(payload, node) {
+        if (!this.items) this.items = [];
+        const _item = this.items?.find(item => item.node === node);
+        if (_item) return _item;
+
+        const { preProcessNode } = this._config ?? {};
         typeof preProcessNode === 'function' && preProcessNode(node);
-        if (!this.itemsById[id]) {
+        const id = String(payload.id || this.getItemId(payload));
+
+        if (!this.itemsById?.[id]) {
             const item = this.addItem(payload, false);
             item.node = node;
-            this.itemsById[item.id] = item;
-            payload.id = item.id;
+            this.itemsById && (this.itemsById[id] = item);
+            payload.id = id;
             return item;
         }
 
@@ -391,25 +532,44 @@ class ListResource extends Resource {
         }
     }
 
+    /**
+     * Returns an item by its ID.
+     * @param {string} id
+     * @returns {ListResourceItemType | undefined}
+     */
     getItem(id) {
-        return this.itemsById[id];
+        return this.itemsById?.[id];
     }
 
+    /**
+     * Returns the raw stateless item given an id.
+     * @param {string} id
+     * @returns {ListResourceItemType | undefined}
+     */
     getRawItem(id) {
-        return this.rawItemsById[id];
+        return this.rawItemsById?.[id];
     }
 
+    /**
+     * Returns the item ID.
+     * @param {ListResourceItemType} item
+     * @returns {string | Symbol | {}}
+     */
     getItemId(item = {}) {
-        const { mapItemId } = this._config;
-        return mapItemId?.(item) || item[this.itemIdMap] || item.id || Symbol('ITEM_ID');
+        const { mapItemId } = this._config ?? {};
+        return mapItemId?.(item) || item[this.getIdMap()] || item.id || Symbol('ITEM_ID') || '';
+    }
+
+    getIdMap() {
+        return this.itemIdMap || 'id';
     }
 
     getNextItem(item = {}) {
-        return this.items[this.getItemIndex(item) + 1] ?? this.items[0];
+        return this.items?.[this.getItemIndex(item) + 1] ?? this.items?.[0];
     }
 
     getPreviousItem(item = {}) {
-        return this.items[this.getItemIndex(item) - 1] ?? this.items[this.items.length - 1];
+        return this.items?.[this.getItemIndex(item) - 1] ?? this.items?.[this.items.length - 1];
     }
 
     removeItem(item = {}, sendUpdate = true) {
@@ -417,10 +577,10 @@ class ListResource extends Resource {
         if (index === -1) {
             return;
         }
-        this.items.splice(index, 1);
-        if (this.itemsById[this.itemIdMap]) {
-            delete this.itemsById[this.itemIdMap];
-            this._config.totalItems--;
+        this.items?.splice(index, 1);
+        if (this.itemsById?.[this.getIdMap()]) {
+            delete this.itemsById?.[this.getIdMap()];
+            this._config?.totalItems && this._config.totalItems--;
         }
         if (sendUpdate) {
             this.signal('remove_item', item, index);
@@ -431,50 +591,70 @@ class ListResource extends Resource {
     removeItems(sendUpdate = true) {
         this.items = [];
         this.itemsById = {};
-        this._config.totalItems = 0;
+        this._config && (this._config.totalItems = 0);
         if (sendUpdate) {
             this.signal('remove_items');
             this.signal('items_updated', this._getItems());
         }
     }
 
+    /**
+     * Updates an item.
+     * @param {ListResourceItemType} item
+     * @param {boolean} sendUpdate
+     */
     updateItem(item = {}, sendUpdate = true) {
         const index = this.getItemIndex(item);
-        if (index === -1) {
-            return;
-        }
-        this.itemsById[item[this.itemIdMap]] = Object.assign(this.itemsById[item[this.itemIdMap]], item);
-        if (sendUpdate) {
-            this.signal('update_item', this.itemsById[item[this.itemIdMap]], index);
+        if (index === -1) return;
+        const itemId = item[this.getIdMap()] || this.getItemId(item) || '';
+        if (this.itemsById && (typeof itemId === 'string' || typeof itemId === 'number')) {
+            this.itemsById[itemId] = Object.assign(this.itemsById[itemId], item);
+            sendUpdate && this.signal('update_item', this.itemsById[itemId], index);
         }
     }
 
+    /**
+     * Returns the index of an item.
+     * @param {ListResourceItemType} item
+     * @returns {number}
+     */
     getItemIndex(item) {
-        if (typeof item[this.itemIdMap] === 'undefined') {
-            return -1;
-        }
-        return this.items.findIndex($item => {
-            return $item[this.itemIdMap] === item[this.itemIdMap];
+        if (!this.items || typeof item[this.getIdMap()] === 'undefined') return -1;
+        return this.items?.findIndex($item => {
+            return $item[this.getIdMap()] === item[this.getIdMap()];
         });
     }
 
+    /**
+     * Processes the items before they're added to the list.
+     * @param {ListResourceItemType[]} items
+     * @returns {ListResourceItemType[]}
+     */
     preProcessItems(items = []) {
         return items.map(item => this.preProcessItem(item));
     }
 
+    /**
+     * Processes an item before it's added to the list.
+     * @param {ListResourceItemType} item
+     * @returns {ListResourceItemType}
+     */
     preProcessItem(item = {}) {
         const rawItem = item;
-        const { preProcessItem } = this._config;
+        const { preProcessItem } = this._config ?? {};
         if (typeof preProcessItem === 'function') {
             item = preProcessItem(item);
         }
-        const id = this.getItemId(item);
+        const id = String(this.getItemId(item));
         item.id = id;
         item.listResource = this;
         item.list = this.getComponent();
-        item[this.itemIdMap] = id;
-        this.itemsById[item[this.itemIdMap]] = item;
-        this.rawItemsById[id] = rawItem;
+        item[this.getIdMap()] = id;
+        const itemId = item?.[this.getIdMap()];
+        if (typeof itemId === 'string' || typeof itemId === 'number') {
+            this.itemsById && (this.itemsById[itemId] = item);
+        }
+        this.rawItemsById && (this.rawItemsById[id] = rawItem);
         return item;
     }
 
@@ -489,15 +669,21 @@ class ListResource extends Resource {
                 defaultValue: 'false',
                 hasLocalStorage: true
             });
-            this._config.isCollapsed = this.toggleListFilter.getValue() === 'false';
+            this._config && (this._config.isCollapsed = this.toggleListFilter.getValue() === 'false');
         }
     }
 
+    /**
+     * Returns the URL to apply the filters.
+     * @param {boolean} encode
+     * @returns {string}
+     */
     getFiltersURL(encode = true) {
+        /** @type {Record<string, any>} */
         const filters = {};
-        Object.keys(this.filters).map(filterKey => {
-            const filter = this.filters[filterKey];
-            if (filter.isURLFilter()) {
+        Object.keys(this.filters || {}).map(filterKey => {
+            const filter = this.filters?.[filterKey];
+            if (filter?.isURLFilter()) {
                 filters[filter.getUrlName()] =
                     filter.value !== filter.getDefaultValue() ||
                     filter.hasLocalStorage() ||
@@ -516,21 +702,27 @@ class ListResource extends Resource {
     getClearFiltersURL() {
         /** @type {Record<string, any>} */
         const filters = {};
-        Object.keys(this.filters).map(filterKey => {
-            const filter = this.filters[filterKey];
-            if (filter.isURLFilter()) {
-                filters[filter.getUrlName()] = null;
-            }
-        });
+        this.filters &&
+            Object.keys(this.filters).map(filterKey => {
+                const filter = this.filters?.[filterKey];
+                if (filter?.isURLFilter()) {
+                    filters[filter.getUrlName()] = null;
+                }
+            });
         if (this.searchFilter) {
             filters[this.searchFilter.getUrlName()] = undefined;
         }
         return editURL(window.location.href.replace(window.location.origin, ''), filters);
     }
 
+    /**
+     * Returns the filter query parameters.
+     * @returns {Record<string, any>}
+     */
     getFilterQueryParams() {
+        /** @type {Record<string, any>} */
         const query = {};
-        this.getFilters().map((filter = {}) => {
+        this.getFilters()?.map(filter => {
             if (!filter.isRequestFilter()) {
                 return;
             }
@@ -542,20 +734,27 @@ class ListResource extends Resource {
 
     initializeFilters() {
         this.hasActiveFilter = false;
+        /** @type {ListFilter[]} */
         this.activeFilters = [];
-        this.getFilters().map(filter => {
+        this.getFilters()?.map(filter => {
             filter.initializeValue();
             const exceptions = [this.sortDirFilter, this.sortFilter];
 
             if (!exceptions.includes(filter) && filter.isActive()) {
-                this.activeFilters.push(filter);
+                this.activeFilters?.push(filter);
                 this.hasActiveFilter = true;
             }
         });
     }
 
-    addSortFilter(config = {}) {
-        this.sortFilter = this.addFilter(this._config.sortByParam, {
+    /**
+     * Adds a sort filter.
+     * @param {string} sortBy
+     * @param {ListFilterConfigType} config
+     * @returns {ListFilter}
+     */
+    addSortFilter(sortBy = this._config?.sortByParam || '', config = {}) {
+        this.sortFilter = this.addFilter(sortBy, {
             defaultValue: '',
             isRequestFilter: true,
             isURLFilter: true,
@@ -569,13 +768,14 @@ class ListResource extends Resource {
         return this.sortFilter ?? this.addSortFilter();
     }
 
-    addSortDirFilter(config = {}) {
-        this.sortDirFilter = this.addFilter(this._config.sortDirParam, {
-            isRequestFilter: true,
-            isURLFilter: true,
-            defaultValue: 'asc',
-            ...config
-        });
+    addSortDirFilter(paramName = this._config?.sortDirParam, config = {}) {
+        paramName &&
+            (this.sortDirFilter = this.addFilter(paramName, {
+                isRequestFilter: true,
+                isURLFilter: true,
+                defaultValue: 'asc',
+                ...config
+            }));
         return this.sortDirFilter;
     }
 
@@ -583,6 +783,12 @@ class ListResource extends Resource {
         return this.sortDirFilter ?? this.addSortDirFilter();
     }
 
+    /**
+     * Sets the sort filter.
+     * @param {string} sortBy
+     * @param {string} sortDir
+     * @returns {this}
+     */
     setSort(sortBy, sortDir) {
         this.sortFilter?.setValue(sortBy);
         this.sortDirFilter?.setValue(sortDir);
@@ -599,15 +805,23 @@ class ListResource extends Resource {
         return this.viewFilter;
     }
 
+    /**
+     * Returns the view filter.
+     * @param {ListFilterConfigType} config
+     * @returns {ListFilter}
+     */
     getViewFilter(config) {
         return this.viewFilter ?? this.addViewFilter(config);
     }
 
-    addSearchFilter() {
-        if (this.searchFilter) {
-            return this.searchFilter;
-        }
-        this.searchFilter = this.addFilter(this._config.searchParam, {
+    /**
+     * Adds a search filter.
+     * @param {string} searchParam
+     * @returns {ListFilter}
+     */
+    addSearchFilter(searchParam = this._config?.searchParam || '') {
+        if (this.searchFilter) return this.searchFilter;
+        this.searchFilter = this.addFilter(searchParam, {
             defaultValue: '',
             isRequestFilter: true,
             isURLFilter: true
@@ -620,6 +834,7 @@ class ListResource extends Resource {
     }
 
     hasURLFilter() {
+        if (!this.filters) return false;
         for (const [, filter] of Object.entries(this.filters)) {
             if (filter.isURLFilter()) {
                 return true;
@@ -629,6 +844,7 @@ class ListResource extends Resource {
     }
 
     canClearFilters() {
+        if (!this.filters) return false;
         for (const [, filter] of Object.entries(this.filters)) {
             if (this.canClearFilter(filter)) {
                 return true;
@@ -637,8 +853,13 @@ class ListResource extends Resource {
         return false;
     }
 
+    /**
+     * Returns whether the filter can be cleared.
+     * @param {ListFilter} filter
+     * @returns {boolean}
+     */
     canClearFilter(filter) {
-        return (
+        return Boolean(
             filter.allowClear() && filter.isRequestFilter() && filter.getDefaultValue() !== filter.getValue()
         );
     }
@@ -646,42 +867,60 @@ class ListResource extends Resource {
     /**
      * Adds a filter.
      * @param {string} id - The filter ID blaasidahd asdh.
-     * @param {ListFilterInterface} options
-     * @returns {any}
+     * @param {ListFilterConfigType} options
+     * @returns {ListFilter}
      */
     addFilter(id, options) {
         const filter = new ListFilter(id, options);
-        this.filters[filter.key] = filter;
+        if (!this.filters) this.filters = {};
+        typeof filter.key === 'string' && (this.filters[filter.key] = filter);
         return filter;
     }
 
+    /**
+     * Sets a filter value.
+     * @param {string} name
+     * @param {any} value
+     * @returns {this}
+     */
     setFilter(name, value = undefined) {
-        const filter = this.filters[name];
+        const filter = this.filters?.[name];
         filter?.setValue(value);
         return this;
     }
 
+    /**
+     * Removes a filter.
+     * @param {string} name
+     */
     removeFilter(name) {
         let id = name;
-        if (typeof this.filters[name] !== 'undefined') {
-            id = this.filters[name].id;
+        if (typeof this.filters?.[name] !== 'undefined') {
+            id = this.filters[name].getId();
             delete this.filters[name];
         }
         localStorage.removeItem(id);
     }
 
+    /**
+     * Returns a filter by its name.
+     * @param {string} name
+     * @returns {ListFilter | undefined}
+     */
     getFilter(name) {
-        return this.filters[name];
+        return this.filters?.[name];
     }
 
     getFilters() {
-        return Object.values(this.filters);
+        return this.filters && Object.values(this.filters);
     }
 
     getFilterValues() {
+        /** @type {Record<string, any>} */
         const values = {};
-        this.getFilters().map((filter = {}) => {
-            values[filter.getAlias() || filter.getId()] = filter.getValue();
+        this.getFilters()?.map(filter => {
+            const filterKey = filter?.getAlias() || filter?.getId();
+            values[filterKey] = filter.getValue();
         });
         return values;
     }
@@ -690,23 +929,28 @@ class ListResource extends Resource {
         return JSON.stringify(this.getFilterValues());
     }
 
+    /**
+     * Paginates the list.
+     * @param {number} itemsPerPage
+     * @returns {this}
+     */
     paginate(itemsPerPage = this.getPerPage()) {
         this.pageFilter = this.addFilter(this.id + '-page', {
             defaultValue: 1,
             isURLFilter: true,
             isRequestFilter: true,
-            urlParamName: this._config.pageParam,
-            alias: this._config.pageParam ?? 'page',
+            urlParamName: this._config?.pageParam,
+            alias: this._config?.pageParam ?? 'page',
             allowClear: false,
-            preProcessQueryParam: value => (parseInt(value, 10) || 1) - 1,
-            callback: page => (this._config.currentPage = parseInt(page, 10))
+            preProcessQueryParam: value => (Number(value) || 1) - 1,
+            callback: page => this._config && (this._config.currentPage = Number(page))
         });
         this.perPageFilter = this.addFilter(this.id + '-size', {
             defaultValue: itemsPerPage,
             hasLocalStorage: false,
-            alias: this._config.perPageParam ?? 'size',
-            urlParamName: this._config.perPageParam,
-            queryName: this._config.perPageParam,
+            alias: this._config?.perPageParam ?? 'size',
+            urlParamName: this._config?.perPageParam,
+            queryName: this._config?.perPageParam,
             isURLFilter: true,
             isRequestFilter: true,
             allowClear: false
@@ -714,11 +958,16 @@ class ListResource extends Resource {
         return this;
     }
 
+    /**
+     * Goes to a specified page.
+     * @param {number} page
+     * @returns {this}
+     */
     goToPage(page) {
-        const { router } = this._config;
-        const url = editURL(window.location.href, { [this._config.pageParam]: page });
-        router.go(url);
-        this.pageFilter.setValue(page);
+        const url = editURL(window.location.href, { [String(this._config?.pageParam)]: page });
+        this.router?.go(url);
+        this.pageFilter?.setValue(page);
+        return this;
     }
 
     nextPage() {
@@ -742,7 +991,7 @@ class ListResource extends Resource {
     getPreviousPage() {
         let page = this.getCurrentPage() - 1;
         page < 1 && (page = this.getTotalPages());
-        this.pageFilter.setValue(page);
+        this.pageFilter?.setValue(page);
         return page;
     }
 
@@ -750,18 +999,16 @@ class ListResource extends Resource {
         this.clearFilterValues(true);
         this.hasActiveFilter = false;
         this.pageFilter?.resetValue(sendUpdate);
-        const { router } = this._config;
         const url = this.getClearFiltersURL();
-        router?.go(url);
+        this.router?.go(url);
     }
 
     clearFilterValues(sendUpdate = false) {
-        Object.keys(this.filters).map(filterKey => {
-            const filter = this.filters[filterKey];
-            if (filter.allowClear()) {
-                filter.resetValue(sendUpdate);
-            }
-        });
+        this.filters &&
+            Object.keys(this.filters).map(filterKey => {
+                const filter = this.filters?.[filterKey];
+                filter?.allowClear() && filter?.resetValue(sendUpdate);
+            });
     }
 
     // #endregion
@@ -771,21 +1018,29 @@ class ListResource extends Resource {
     initializeSelectedItems() {
         this.selectedItems = this.getSelectedItems();
         this.selectedItemsById = {};
-        this.selectedItems.map(item => (this.selectedItemsById[this.getItemId(item)] = item));
+        this.selectedItems?.map(item => {
+            return this.selectedItemsById?.[String(this.getItemId(item))] || item;
+        });
         return this;
     }
 
     hasSelections() {
-        return Boolean(this.selectedItems.length);
+        return Boolean(this.selectedItems?.length);
     }
 
-    isItemSelectable() {
+    /**
+     * Returns whether an item is selectable.
+     * @param {ListResourceItemType} _item
+     * @returns {boolean}
+     */
+    isItemSelectable(_item) {
         return this.hasSelection();
     }
 
     hasSelectableItems() {
-        for (const item in this.items) {
-            if (this.isItemSelectable(this.items[item])) {
+        if (!this.items) return false;
+        for (const item of this.items) {
+            if (this.isItemSelectable(item)) {
                 return true;
             }
         }
@@ -793,7 +1048,7 @@ class ListResource extends Resource {
     }
 
     getSelectableItems() {
-        return this.items.filter(item => this.isItemSelectable(item));
+        return this.items?.filter(item => this.isItemSelectable(item));
     }
 
     getSelectedItems() {
@@ -801,32 +1056,51 @@ class ListResource extends Resource {
     }
 
     getSavedSelections() {
-        return JSON.parse(localStorage.getItem(this.selectionKey)) || [];
+        if (!this.selectionKey) return [];
+        const selectionData = localStorage.getItem(this.selectionKey);
+        return selectionData ? JSON.parse(selectionData) : [];
     }
 
+    /**
+     * Sets the selected items.
+     * @param {ListResourceItemType[]} items
+     */
     setSelectedItems(items = []) {
         this.selectedItems = items;
         if (this.hasSelectionSave()) {
-            localStorage.setItem(this.selectionKey, JSON.stringify(items));
-            localStorage.setItem(this.selectionLengthKey, items.length);
+            this.selectionKey && localStorage.setItem(this.selectionKey, JSON.stringify(items));
+            this.selectionLengthKey &&
+                localStorage.setItem(this.selectionLengthKey, items?.length.toString());
         }
     }
 
     getSelectedIds() {
         const items = this.getSelectedItems();
+        /** @type {string[]} */
         const rv = [];
-        items.map(item => item[this.itemIdMap] && rv.push(item[this.itemIdMap]));
+
+        /**
+         * Maps the item to its ID.
+         * @param {ListResourceItemType} item
+         */
+        const mapItem = item => {
+            /** @type {string} */
+            const id = String(item[this.getIdMap()]);
+            typeof item[id] === 'string' && rv.push(id);
+        };
+        items.map(mapItem);
         return rv;
     }
 
     getSelectedCount() {
-        if (this.hasSelectionSave()) {
-            return parseInt(localStorage.getItem(this.selectionLengthKey), 10);
+        if (this.hasSelectionSave() && this.selectionLengthKey) {
+            return parseInt(localStorage.getItem(this.selectionLengthKey) ?? '0', 10);
         }
-        return this.selectedItems.length;
+        return this.selectedItems?.length;
     }
 
     hasPartialSelection() {
+        if (!this.items) return false;
         for (const item of this.items) {
             if (this.isItemSelectable(item) && !this.isSelected(item)) {
                 return true;
@@ -840,20 +1114,27 @@ class ListResource extends Resource {
     }
 
     isSelected(item = {}) {
-        const itemID = this.getItemId(item);
-        return Boolean(itemID && this.selectedItemsById[itemID]);
+        const itemID = String(this.getItemId(item));
+        return Boolean(itemID && this.selectedItemsById?.[itemID]);
     }
 
+    /**
+     * Selects an item.
+     * @param {ListResourceItemType} item
+     * @param {ListResourceItemType[]} [items]
+     * @param {boolean} callOnChange
+     * @returns {this}
+     */
     selectItem(item = {}, items, callOnChange = true) {
         if (this.isSelected(item) || (this.hasSelection() && !this.isItemSelectable(item))) {
             return this;
         }
         item = this.preProcessSelectionItem(item);
         items = items || this.getSelectedItems();
-        items.push(item);
+        items?.push(item);
         this.setSelectedItems(items);
-        const itemID = this.getItemId(item);
-        this.selectedItemsById[itemID] = item;
+        const itemID = String(this.getItemId(item));
+        this.selectedItemsById && (this.selectedItemsById[itemID] = item);
         if (typeof itemID === 'string' || typeof itemID === 'number') {
             this.signal(`item_selected_${itemID}`, true);
         }
@@ -867,50 +1148,54 @@ class ListResource extends Resource {
         if (!this.isSelected(item)) {
             return;
         }
-        const itemID = this.getItemId(item);
-        delete this.selectedItemsById[itemID];
-        this.setSelectedItems(Object.values(this.selectedItemsById));
+        const itemID = String(this.getItemId(item));
+        delete this.selectedItemsById?.[itemID];
+        this.selectedItemsById && this.setSelectedItems(Object.values(this.selectedItemsById));
         this.signal(`item_deselected_${itemID}`, false);
         if (callOnChange) {
-            this.signal('selection_change', this.selectedItems.length);
+            this.signal('selection_change', this.selectedItems?.length);
         }
         return this;
     }
 
     toggleItem(item = {}, callOnChange = true) {
         if (!this.isSelected(item)) {
-            this.selectItem(item, null, false);
+            this.selectItem(item, undefined, false);
         } else {
             this.deselectItem(item, false);
         }
         if (callOnChange) {
-            this.signal('selection_change', this.selectedItems.length);
+            this.signal('selection_change', this.selectedItems?.length);
         }
         return this;
     }
 
     /**
      * Changes the state of all selections.
-     * @param {*} selected
-     * @param {*} callOnChange
-     * @param {*} items
+     * @param {boolean} selected
+     * @param {boolean} callOnChange
+     * @param {ListResourceItemType[]} items
      * @returns {this}
      */
-    setSelections(selected, callOnChange = true, items = this._getItems()) {
+    setSelections(selected, callOnChange = true, items = this._getItems() || []) {
         if (selected) {
-            items.map(item => this.selectItem(item, null, false));
+            items.map(item => this.selectItem(item, undefined, false));
         } else {
             items.map(item => this.deselectItem(item, false));
         }
         if (callOnChange) {
-            this.signal('selection_change', this.selectedItems.length);
+            this.signal('selection_change', this.selectedItems?.length);
         }
         return this;
     }
 
+    /**
+     * Toggles the selection of all items.
+     * @returns {boolean}
+     */
     toggleSelections() {
         let value = false;
-        for (const item of this.items) {
+        for (const item /** @type {ListResourceItemType} */ of this.items || []) {
             if (this.isItemSelectable(item) && !this.isSelected(item)) {
                 value = true;
                 break;
@@ -937,11 +1222,11 @@ class ListResource extends Resource {
 
     clearSelectionData() {
         if (this.hasSelectionSave()) {
-            localStorage.removeItem(this.selectionKey);
-            localStorage.removeItem(this.selectionLengthKey);
-            localStorage.removeItem(this.selectionRedirectKey);
+            this.selectionKey && localStorage.removeItem(this.selectionKey);
+            this.selectionLengthKey && localStorage.removeItem(this.selectionLengthKey);
+            this.selectionRedirectKey && localStorage.removeItem(this.selectionRedirectKey);
         }
-        this.selectedItems.forEach(item => this.signal(`item_deselected_${item.id}`));
+        this.selectedItems?.forEach(item => this.signal(`item_deselected_${String(item.id)}`));
         this.selectedItems = [];
         this.selectedItemsById = {};
         this.signal('selection_change', this.selectedItems.length);
@@ -956,8 +1241,8 @@ class ListResource extends Resource {
             totalPages: 1,
             currentPage: 1
         };
-        this._initializePayload(payload, {}, false);
-        this.update();
+        this._initializePayload(payload, undefined, false);
+        this.update(payload);
     }
 
     destroy() {
@@ -971,6 +1256,10 @@ class ListResource extends Resource {
         removeResource(this.id);
         this.clearSelectionData();
         super.destroy();
+    }
+
+    async onLoad() {
+        return this.items?.length ? Promise.resolve() : super.onLoad();
     }
 
     // #endregion
