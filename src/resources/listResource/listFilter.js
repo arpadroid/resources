@@ -7,10 +7,6 @@ import { getService } from '@arpadroid/context';
 import { observerMixin, dummySignal, mergeObjects, arrayEmpty, getURLParam } from '@arpadroid/tools';
 
 class ListFilter {
-    /** @type {(property: string, value: unknown) => void} signal */
-    signal;
-    /** @type {(property: string, callback: () => void) => () => void} on */
-    on;
 
     _options = [];
 
