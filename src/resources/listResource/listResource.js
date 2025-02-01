@@ -16,8 +16,9 @@ class ListResource extends Resource {
     //////////////////////////////
     // #region INITIALIZATION
     //////////////////////////////
-    /** @override @type {ListResourceConfigType} */
-
+    /** @type {ListResourceConfigType} */
+    // @ts-ignore
+    _config = this._config;
     /**
      * Creates a new ListResource instance.
      * @param {ListResourceConfigType} config
@@ -396,7 +397,6 @@ class ListResource extends Resource {
      */
     _getItems() {
         if (!this.isStatic()) return this.items;
-        /** @type {string[]} */
         const searchFields = this._config?.searchFields;
         const query = this.searchFilter?.getValue();
         /** @type {ListResourceItemType[] | any} */
@@ -483,7 +483,7 @@ class ListResource extends Resource {
         } else {
             this.items?.push(item);
         }
-        this._config && this._config.totalItems++;
+        this._config?.totalItems && this._config.totalItems++;
         if (sendUpdate) {
             this.signal('add_item', item, unshift);
             this.signal('items_updated', this._getItems());
@@ -553,7 +553,7 @@ class ListResource extends Resource {
     /**
      * Returns the item ID.
      * @param {ListResourceItemType} item
-     * @returns {string | Symbol | {}}
+     * @returns {string | symbol | {}}
      */
     getItemId(item = {}) {
         const { mapItemId } = this._config ?? {};

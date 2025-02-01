@@ -96,7 +96,7 @@ class Resource {
     /**
      * Merges the default configuration with the provided configuration.
      * @param {ResourceConfigType | Record<string, never>} [config]
-     * @returns {ResourceConfigType}
+     * @returns {ResourceConfigType | any}
      */
     _setConfig(config = {}) {
         return mergeObjects(this.getDefaultConfig(), config) || {};
