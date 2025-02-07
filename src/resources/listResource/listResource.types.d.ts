@@ -1,6 +1,7 @@
 import { Router } from '@arpadroid/services';
 import { ResourceConfigType } from '../resource/resource.types';
 import { ListFilterOptionsType } from './listFilter.types';
+import { ListItem } from './listResource.js';
 
 export type ListResourceConfigType = Partial<ResourceConfigType> & {
     currentPage?: number;
@@ -18,7 +19,7 @@ export type ListResourceConfigType = Partial<ResourceConfigType> & {
     perPageOptions?: ListFilterOptionsType[];
     mapItemId?: (_item: ListResourceItemType) => string;
     preProcessItem?: (_item: ListResourceItemType) => ListResourceItemType;
-    preProcessNode?: (_node: HTMLElement) => HTMLElement;
+    preProcessNode?: (_node: ListItem | undefined) => ListItem | undefined;
     router?: Router;
     searchFields?: string[];
     searchParam?: string;

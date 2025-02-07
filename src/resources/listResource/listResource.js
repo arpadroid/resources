@@ -1,8 +1,10 @@
+// @ts-nocheck
 /**
  * @typedef {import('@arpadroid/services').Router} Router
  * @typedef {import('./listFilter.types').ListFilterConfigType} ListFilterConfigType
  * @typedef {import('./listResource.types').ListResourceConfigType} ListResourceConfigType
  * @typedef {import('./listResource.types').ListResourceItemType} ListResourceItemType
+ * @typedef {import('@arpadroid/lists').ListItem} ListItem
  */
 import { editURL, sortObjectArrayByKey, searchObjectArray, paginateArray } from '@arpadroid/tools';
 import Resource, { removeResource } from '../resource/resource.js';
@@ -16,8 +18,7 @@ class ListResource extends Resource {
     //////////////////////////////
     // #region INITIALIZATION
     //////////////////////////////
-    /** @type {ListResourceConfigType} */
-    // @ts-ignore
+    /** @type {ListResourceConfigType} */ 
     _config = this._config;
     /**
      * Creates a new ListResource instance.
@@ -238,7 +239,7 @@ class ListResource extends Resource {
 
     /**
      * Sets a callback to process the HTML node once it's created.
-     * @param {(node: HTMLElement) => HTMLElement} callback
+     * @param {(node: ListItem) => ListItem | undefined} callback
      * @returns {this}
      */
     setPreProcessNode(callback) {
@@ -318,7 +319,6 @@ class ListResource extends Resource {
      * @returns {Promise<any> | undefined}
      */
     search(value) {
-        // @ts-ignore
         return this.fetch({ search: value });
     }
 
@@ -494,7 +494,7 @@ class ListResource extends Resource {
     /**
      * Registers an item with a node.
      * @param {ListResourceItemType} payload
-     * @param {HTMLElement} node
+     * @param {ListItem} node
      * @returns {ListResourceItemType}
      */
     registerItem(payload, node) {
@@ -564,14 +564,29 @@ class ListResource extends Resource {
         return this.itemIdMap || 'id';
     }
 
+    /**
+     * Returns the previous item.
+     * @param {ListResourceItemType} item
+     * @returns {ListResourceItemType | undefined}
+     */
     getNextItem(item = {}) {
         return this.items?.[this.getItemIndex(item) + 1] ?? this.items?.[0];
     }
 
+    /**
+     * Returns the previous item.
+     * @param {ListResourceItemType} item
+     * @returns {ListResourceItemType | undefined}
+     */
     getPreviousItem(item = {}) {
         return this.items?.[this.getItemIndex(item) - 1] ?? this.items?.[this.items.length - 1];
     }
 
+    /**
+     * Removes an item from the list.
+     * @param {ListResourceItemType} item
+     * @param {boolean} sendUpdate
+     */
     removeItem(item = {}, sendUpdate = true) {
         const index = this.getItemIndex(item);
         if (index === -1) {

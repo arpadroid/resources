@@ -2,8 +2,8 @@
     "name": "@arpadroid/resources",
     "version": "0.0.1",
     "description": "Data management abstraction, resources and utilities",
-    "module": "./dist/arpadroid-resources.js",
     "types": "./dist/@types/types.compiled.d.ts",
+    "exports": "./dist/arpadroid-resources.js",
     "type": "module",
     "sideEffects": false,
     "scripts": {
@@ -34,7 +34,8 @@
     "peerDependencies": {
         "@arpadroid/tools": "file:../tools",
         "@arpadroid/context": "file:../context",
-        "@arpadroid/services": "file:../services"
+        "@arpadroid/services": "file:../services",
+        "@arpadroid/lists": "file:../lists"
     },
     "devDependencies": {
         "@arpadroid/arpadroid": "file:../arpadroid",

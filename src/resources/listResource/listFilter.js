@@ -123,7 +123,6 @@ class ListFilter {
 
     setIsActive() {
         const { allowClear, defaultValue, isRequestFilter } = this._config;
-        // @ts-ignore
         const areEmptyArrays = arrayEmpty(this.value) && arrayEmpty(defaultValue);
         if (
             typeof this.value === 'undefined' ||
