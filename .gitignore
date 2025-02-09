@@ -2,6 +2,6 @@ bundle-stats.html
 node_modules/
 dist/
 junit.xml
-.types
+.tmp/
 .tsbuildinfo
 tsconfig.tsbuildinfo

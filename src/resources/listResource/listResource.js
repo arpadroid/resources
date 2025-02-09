@@ -1,14 +1,14 @@
-// @ts-nocheck
 /**
  * @typedef {import('@arpadroid/services').Router} Router
  * @typedef {import('./listFilter.types').ListFilterConfigType} ListFilterConfigType
  * @typedef {import('./listResource.types').ListResourceConfigType} ListResourceConfigType
  * @typedef {import('./listResource.types').ListResourceItemType} ListResourceItemType
- * @typedef {import('@arpadroid/lists').ListItem} ListItem
+ * @typedef {import('./listResource.types').ListResourceItemNodeType} ListResourceItemNodeType
  */
 import { editURL, sortObjectArrayByKey, searchObjectArray, paginateArray } from '@arpadroid/tools';
 import Resource, { removeResource } from '../resource/resource.js';
 import ListFilter from './listFilter.js';
+
 import { getService } from '@arpadroid/context';
 /**
  * @class
@@ -18,7 +18,7 @@ class ListResource extends Resource {
     //////////////////////////////
     // #region INITIALIZATION
     //////////////////////////////
-    /** @type {ListResourceConfigType} */ 
+    /** @type {ListResourceConfigType} */  // @ts-ignore
     _config = this._config;
     /**
      * Creates a new ListResource instance.
@@ -239,7 +239,7 @@ class ListResource extends Resource {
 
     /**
      * Sets a callback to process the HTML node once it's created.
-     * @param {(node: ListItem) => ListItem | undefined} callback
+     * @param {(node: ListResourceItemNodeType) => ListResourceItemNodeType | undefined} callback
      * @returns {this}
      */
     setPreProcessNode(callback) {
@@ -319,6 +319,7 @@ class ListResource extends Resource {
      * @returns {Promise<any> | undefined}
      */
     search(value) {
+        // @ts-ignore
         return this.fetch({ search: value });
     }
 
@@ -494,7 +495,7 @@ class ListResource extends Resource {
     /**
      * Registers an item with a node.
      * @param {ListResourceItemType} payload
-     * @param {ListItem} node
+     * @param {ListResourceItemNodeType} node
      * @returns {ListResourceItemType}
      */
     registerItem(payload, node) {

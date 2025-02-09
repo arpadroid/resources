@@ -34,8 +34,7 @@
     "peerDependencies": {
         "@arpadroid/tools": "file:../tools",
         "@arpadroid/context": "file:../context",
-        "@arpadroid/services": "file:../services",
-        "@arpadroid/lists": "file:../lists"
+        "@arpadroid/services": "file:../services"
     },
     "devDependencies": {
         "@arpadroid/arpadroid": "file:../arpadroid",
