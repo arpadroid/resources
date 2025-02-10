@@ -3,7 +3,7 @@
  * @typedef {import('./messageResource.types').MessageType} MessageType
  * @typedef {import('@arpadroid/tools/src/common.types').AbstractContentInterface} AbstractContentInterface
  */
-import { observerMixin, mergeObjects, dummySignal } from '@arpadroid/tools';
+import { observerMixin, mergeObjects, dummySignal, dummyListener } from '@arpadroid/tools';
 
 class MessageResource {
     /** @type {Record<string, MessageType>} */
@@ -11,6 +11,7 @@ class MessageResource {
 
     constructor(config = {}) {
         this.signal = dummySignal;
+        this.on = dummyListener;
         observerMixin(this);
         this.setConfig(config);
         this._initialize();
