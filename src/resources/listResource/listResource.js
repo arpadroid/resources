@@ -18,7 +18,7 @@ class ListResource extends Resource {
     //////////////////////////////
     // #region INITIALIZATION
     //////////////////////////////
-    /** @type {ListResourceConfigType} */  // @ts-ignore
+    /** @type {ListResourceConfigType} */ // @ts-ignore
     _config = this._config;
     /**
      * Creates a new ListResource instance.
@@ -398,10 +398,15 @@ class ListResource extends Resource {
      */
     _getItems() {
         if (!this.isStatic()) return this.items;
+        this._payload.output = [];
         const searchFields = this._config?.searchFields;
-        const query = this.searchFilter?.getValue();
+        const query = /** @type {string}*/ (this.searchFilter?.getValue() || '');
         /** @type {ListResourceItemType[] | any} */
         let items = searchObjectArray(this.items, query, searchFields);
+        if (query?.length && !items.length) {
+            this._payload.output.push({ code: 'no-results' });
+            items = this.items;
+        }
         this.staticQueryCount = items.length;
         const sortBy = this.sortFilter?.getValue();
         items = sortObjectArrayByKey(items, String(sortBy), String(this.sortDirFilter?.getValue()));
