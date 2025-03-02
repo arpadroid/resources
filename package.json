@@ -1,6 +1,6 @@
 {
     "name": "@arpadroid/resources",
-    "version": "0.0.1",
+    "version": "1.0.0",
     "description": "Data management abstraction, resources and utilities",
     "types": "./dist/@types/types.compiled.d.ts",
     "exports": "./dist/arpadroid-resources.js",
@@ -32,12 +32,12 @@
     },
     "homepage": "https://github.com/arpadroid/resources#readme",
     "peerDependencies": {
+        "@arpadroid/module": "file:../module",
         "@arpadroid/tools": "file:../tools",
         "@arpadroid/context": "file:../context",
         "@arpadroid/services": "file:../services"
     },
     "devDependencies": {
-        "@arpadroid/module": "file:../module",
         "@babel/core": "^7.23.9",
         "@babel/plugin-syntax-import-assertions": "^7.23.3",
         "@babel/preset-env": "^7.23.9",

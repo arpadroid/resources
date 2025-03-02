@@ -4,6 +4,7 @@
         // "tsBuildInfoFile": ".tsbuildinfo"
         "rootDir": "./src",
         "outDir": "./.tmp/.types",
+        "skipLibCheck": true
     },
     "include": ["src/**/*"],
     "exclude": ["node_modules", "**/*.test.ts", "**/*.stories.js", "**/*.test.js"]
