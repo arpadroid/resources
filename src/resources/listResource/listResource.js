@@ -18,7 +18,7 @@ class ListResource extends Resource {
     //////////////////////////////
     // #region INITIALIZATION
     //////////////////////////////
-    /** @type {ListResourceConfigType} */ // @ts-ignore
+    /** @type {ListResourceConfigType} */
     _config = this._config;
     /**
      * Creates a new ListResource instance.
