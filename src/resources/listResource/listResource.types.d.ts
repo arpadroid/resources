@@ -33,7 +33,7 @@ export type ListResourceItemType = {
     id?: string | symbol;
     isSelected?: boolean;
     node?: ListResourceItemNodeType;
-} & Record<string, unknown>;
+} & Record<string, any>;
 
 
 export type ListResourceItemNodeType =  ElementType;

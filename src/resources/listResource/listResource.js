@@ -286,7 +286,7 @@ class ListResource extends Resource {
 
     /**
      * Fetches the list items.
-     * @param {[]} args
+     * @param {...any} args
      * @returns {Promise<any> | undefined}
      */
     fetch(...args) {
@@ -295,7 +295,12 @@ class ListResource extends Resource {
         return rv;
     }
 
-    async _fetchStatic() {
+    /**
+     * Fetches the list items statically.
+     * @param {...any} _args
+     * @returns {Promise<any>}
+     */
+    async _fetchStatic(..._args) {
         const payload = { items: this.items };
         await this._initializePayload(payload);
         return Promise.resolve(payload);
@@ -319,7 +324,6 @@ class ListResource extends Resource {
      * @returns {Promise<any> | undefined}
      */
     search(value) {
-        // @ts-ignore
         return this.fetch({ search: value });
     }
 
@@ -355,7 +359,7 @@ class ListResource extends Resource {
     /**
      * Initializes the payload.
      * @param {Record<string, any>} payload
-     * @param {Headers} [headers]
+     * @param {Partial<import('@arpadroid/services').HeadersType>} [headers]
      * @param {boolean} update
      * @returns {Promise<Record<string, any>>}
      */
@@ -753,7 +757,11 @@ class ListResource extends Resource {
         return query;
     }
 
-    initializeFilters() {
+    /**
+     * Initializes the filters.
+     * @param {...any} _args
+     */
+    initializeFilters(..._args) {
         this.hasActiveFilter = false;
         /** @type {ListFilter[]} */
         this.activeFilters = [];

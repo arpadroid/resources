@@ -2,10 +2,11 @@
  * @typedef {import('./resource.types').ResourceConfigType} ResourceConfigType
  * @typedef {import('./resource.types').ResourceResponseType} ResourceResponseType
  * @typedef {import('./resource.types').ResourcePayloadType} ResourcePayloadType
- * @typedef {import('@arpadroid/services').APIService} APIService
+ * @typedef {import('@arpadroid/services').HeadersType} HeadersType
  */
 import { dummyListener, dummyOff, dummySignal, mergeObjects, observerMixin } from '@arpadroid/tools';
 import { getService } from '@arpadroid/context';
+import { APIService } from '@arpadroid/services';
 
 /** @type {Record<string, unknown>} */
 export const resourceStore = {};
@@ -36,7 +37,7 @@ class Resource {
     promise;
     /** @type {Promise<ResourceResponseType> | undefined} */
     request;
-    /** @type {Headers | undefined} */
+    /** @type {Partial<HeadersType> | undefined} */
     requestHeaders;
     pollCount = 0;
 
@@ -46,7 +47,7 @@ class Resource {
      * @param {ResourceConfigType | Record<string, never>} config
      */
     constructor(url, config = {}) {
-        /** @type {APIService} */
+        /** @type {typeof APIService} */
         this.apiService = getService('apiService');
         /** @type {(() => void)[]} */
         this._unsubscribes = [];
@@ -177,7 +178,7 @@ class Resource {
     /**
      * Fetches main resource.
      * @param {...any} args
-     * @returns {Promise<ResourceResponseType>}
+     * @returns {Promise<ResourceResponseType | ResourcePayloadType | undefined>}
      */
     // eslint-disable-next-line no-unused-vars
     async _fetch(...args) {
@@ -195,10 +196,10 @@ class Resource {
             }
             return this._initializePayload(payload, headers);
         };
-
+        const url = this.getURL();
+        if (!url) return Promise.reject('URL is not set');
         return this.apiService
-            // @ts-ignore
-            .fetch(this.getURL(), {
+            .fetch(url, {
                 query: this.getQuery(),
                 headers
             })
@@ -232,7 +233,7 @@ class Resource {
 
     /**
      * Returns the headers of the resource.
-     * @returns {Headers | undefined}
+     * @returns {Partial<HeadersType> | undefined}
      */
     getHeaders() {
         return;
@@ -249,7 +250,7 @@ class Resource {
     /**
      * Initializes the payload of the resource.
      * @param {ResourcePayloadType} payload
-     * @param {Headers | undefined} [headers]
+     * @param {Partial<HeadersType> | undefined} [headers]
      * @returns {Promise<ResourcePayloadType>}
      */
     async _initializePayload(payload = {}, headers) {
