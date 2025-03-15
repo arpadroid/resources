@@ -5,7 +5,13 @@
  * @typedef {import('./listResource.types').ListResourceItemType} ListResourceItemType
  * @typedef {import('./listResource.types').ListResourceItemNodeType} ListResourceItemNodeType
  */
-import { editURL, sortObjectArrayByKey, searchObjectArray, paginateArray } from '@arpadroid/tools';
+import {
+    editURL,
+    sortObjectArrayByKey,
+    searchObjectArray,
+    paginateArray,
+    getObjectId
+} from '@arpadroid/tools';
 import Resource, { removeResource } from '../resource/resource.js';
 import ListFilter from './listFilter.js';
 
@@ -43,7 +49,6 @@ class ListResource extends Resource {
         this.selectedItems = [];
         /** @type {Record<string, ListResourceItemType>} */
         this.selectedItemsById = {};
-        this.itemIdMap = 'id';
         this.hasActiveFilter = false;
         this.selectionKey = '';
         this.selectionLengthKey = '';
@@ -69,6 +74,7 @@ class ListResource extends Resource {
             itemsPerPage: 0,
             listComponent: undefined,
             pageParam: 'page',
+            itemIdMap: 'id',
             perPageParam: 'perPage',
             preProcessItem: undefined,
             preProcessNode: undefined,
@@ -473,7 +479,7 @@ class ListResource extends Resource {
     setItems(items) {
         this.items = items.map(item => this.preProcessItem(item));
         const _items = this._getItems();
-        this.signal('set_items', _items);
+        this.signal('items', _items);
         this.signal('items_updated', _items);
         this.isStatic() && this.fetch();
     }
@@ -525,6 +531,7 @@ class ListResource extends Resource {
         }
 
         this.itemsById[id].node = node;
+
         return this.itemsById[id];
     }
 
@@ -567,11 +574,17 @@ class ListResource extends Resource {
      */
     getItemId(item = {}) {
         const { mapItemId } = this._config ?? {};
-        return mapItemId?.(item) || item[this.getIdMap()] || item.id || Symbol('ITEM_ID') || '';
+        return (
+            mapItemId?.(item) ||
+            item[this.getIdMap()] ||
+            item.id ||
+            'item-' + getObjectId(item) ||
+            Math.random()
+        );
     }
 
     getIdMap() {
-        return this.itemIdMap || 'id';
+        return this._config?.itemIdMap || 'id';
     }
 
     /**

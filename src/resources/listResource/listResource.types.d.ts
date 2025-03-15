@@ -18,6 +18,7 @@ export type ListResourceConfigType = Partial<ResourceConfigType> & {
     perPage?: number;
     perPageOptions?: ListFilterOptionsType[];
     mapItemId?: (_item: ListResourceItemType) => string;
+    itemIdMap?: string;
     preProcessItem?: (_item: ListResourceItemType) => ListResourceItemType;
     preProcessNode?: (_node: ListResourceItemNodeType | undefined) => ListResourceItemNodeType | undefined;
     router?: Router;
@@ -33,6 +34,7 @@ export type ListResourceItemType = {
     id?: string | symbol;
     isSelected?: boolean;
     node?: ListResourceItemNodeType;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 } & Record<string, any>;
 
 
