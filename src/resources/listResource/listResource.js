@@ -54,7 +54,7 @@ class ListResource extends Resource {
         this.selectionLengthKey = '';
         this.selectionRedirectKey = '';
         super._initializeProperties();
-        /** @type {Router} */
+        /** @type {Router} */ // @ts-ignore
         this.router = getService('router');
     }
 
@@ -1003,23 +1003,23 @@ class ListResource extends Resource {
     /**
      * Goes to a specified page.
      * @param {number} page
-     * @returns {this}
+     * @returns {Promise<Record<string, any>> | undefined}
      */
     goToPage(page) {
         const url = editURL(window.location.href, { [String(this._config?.pageParam)]: page });
-        this.router?.go(url);
+        const rv = this.router?.go(url);
         this.pageFilter?.setValue(page);
-        return this;
+        return rv;
     }
 
     nextPage() {
         const page = this.getNextPage();
-        this.goToPage(page);
+        return this.goToPage(page);
     }
 
     previousPage() {
         const page = this.getPreviousPage();
-        this.goToPage(page);
+        return this.goToPage(page);
     }
 
     getNextPage() {
