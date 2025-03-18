@@ -150,7 +150,7 @@ class ListFilter {
         const savedValue = this.getSavedValue();
         /**
          * @todo Implement checking is pop state without Context dependency.
-         */
+         */ // @ts-ignore
         const isPopState = Boolean(getService('router')?.isPopState());
 
         if (isURLFilter && typeof this.urlValue !== 'undefined') {

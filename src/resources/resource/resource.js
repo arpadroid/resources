@@ -47,7 +47,7 @@ class Resource {
      * @param {ResourceConfigType | Record<string, never>} config
      */
     constructor(url, config = {}) {
-        /** @type {typeof APIService} */
+        /** @type {typeof APIService} */ // @ts-ignore
         this.apiService = getService('apiService');
         /** @type {(() => void)[]} */
         this._unsubscribes = [];
