@@ -3,10 +3,10 @@
  * @typedef {import('./resource.types').ResourceResponseType} ResourceResponseType
  * @typedef {import('./resource.types').ResourcePayloadType} ResourcePayloadType
  * @typedef {import('@arpadroid/services').HeadersType} HeadersType
+ * @typedef {import('@arpadroid/services').APIService} APIService
  */
 import { dummyListener, dummyOff, dummySignal, mergeObjects, observerMixin } from '@arpadroid/tools';
 import { getService } from '@arpadroid/context';
-import { APIService } from '@arpadroid/services';
 
 /** @type {Record<string, unknown>} */
 export const resourceStore = {};
@@ -47,7 +47,7 @@ class Resource {
      * @param {ResourceConfigType | Record<string, never>} config
      */
     constructor(url, config = {}) {
-        /** @type {typeof APIService} */ // @ts-ignore
+        /** @type {APIService} */ // @ts-ignore
         this.apiService = getService('apiService');
         /** @type {(() => void)[]} */
         this._unsubscribes = [];
@@ -198,7 +198,7 @@ class Resource {
         };
         const url = this.getURL();
         if (!url) return Promise.reject('URL is not set');
-        return this.apiService
+        return this.apiService // @ts-ignore
             .fetch(url, {
                 query: this.getQuery(),
                 headers
