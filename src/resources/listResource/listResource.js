@@ -500,7 +500,7 @@ class ListResource extends Resource {
             this.items?.push(item);
         }
         this._config?.totalItems && this._config.totalItems++;
-        if (sendUpdate) {
+        if ((!item?.node || !item.node?.isConnected) && sendUpdate) {
             this.signal('add_item', item, unshift);
             this.signal('items_updated', this._getItems());
         }
@@ -523,6 +523,7 @@ class ListResource extends Resource {
         const id = String(payload.id || this.getItemId(payload));
 
         if (!this.itemsById?.[id]) {
+            payload.node = node;
             const item = this.addItem(payload, false);
             item.node = node;
             this.itemsById && (this.itemsById[id] = item);
@@ -533,6 +534,15 @@ class ListResource extends Resource {
         this.itemsById[id].node = node;
 
         return this.itemsById[id];
+    }
+
+    /**
+     * Checks if an item exists in the list.
+     * @param {string} id
+     * @returns {boolean}
+     */
+    hasItem(id) {
+        return Boolean(this.itemsById?.[id]);
     }
 
     /**
