@@ -589,7 +589,7 @@ class ListResource extends Resource {
             item[this.getIdMap()] ||
             item.id ||
             'item-' + getObjectId(item) ||
-            Math.random()
+            'item-' + Math.random()
         );
     }
 

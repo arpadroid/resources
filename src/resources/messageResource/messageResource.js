@@ -3,7 +3,7 @@
  * @typedef {import('./messageResource.types').MessageType} MessageType
  * @typedef {import('@arpadroid/tools/src/common.types').AbstractContentInterface} AbstractContentInterface
  */
-import { observerMixin, mergeObjects, dummySignal, dummyListener } from '@arpadroid/tools';
+import { observerMixin, mergeObjects, dummySignal, dummyListener, getObjectId } from '@arpadroid/tools';
 
 class MessageResource {
     /** @type {Record<string, MessageType>} */
@@ -62,7 +62,7 @@ class MessageResource {
      * @returns {MessageType}
      */
     addMessage(message = {}, sendUpdate = true) {
-        message.id = String(message?.node?.id || message?.id) || Symbol('UID');
+        message.id = message?.node?.id || message?.id || 'message-' + getObjectId(message) || 'message-' + Math.random();
         if (typeof message.type === 'undefined') {
             message.type = 'info';
         }
