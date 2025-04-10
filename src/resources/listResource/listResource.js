@@ -475,13 +475,16 @@ class ListResource extends Resource {
     /**
      * Sets the items.
      * @param {ListResourceItemType[]} items
+     * @param {boolean} sendUpdate
      */
-    setItems(items) {
+    async setItems(items, sendUpdate = false) {
         this.items = items.map(item => this.preProcessItem(item));
+        this.isStatic() && (await this.fetch());
         const _items = this._getItems();
-        this.signal('items', _items);
-        this.signal('items_updated', _items);
-        this.isStatic() && this.fetch();
+        if (sendUpdate) {
+            this.signal('items', _items);
+            this.signal('items_updated', _items);
+        }
     }
 
     /**
