@@ -62,7 +62,11 @@ class MessageResource {
      * @returns {MessageType}
      */
     addMessage(message = {}, sendUpdate = true) {
-        message.id = message?.node?.id || message?.id || 'message-' + getObjectId(message) || 'message-' + Math.random();
+        message.id =
+            message?.node?.id ||
+            message?.id ||
+            'message-' + getObjectId(message) ||
+            'message-' + Math.random();
         if (typeof message.type === 'undefined') {
             message.type = 'info';
         }
@@ -85,14 +89,16 @@ class MessageResource {
         if (message) {
             mergeObjects(message, config);
             message?.node?.setConfig(message);
-            message?.node?.reRender();
+            if (typeof message?.node?.reRender === 'function') {
+                message.node.reRender();
+            }
         }
     }
 
     /**
      * Registers a message.
      * @param {MessageType} config
-     * @param {HTMLElement} node
+     * @param {import('../listResource/listResource').ListResourceItemNodeType} node
      * @returns {MessageType}
      */
     registerMessage(config = {}, node) {

@@ -245,7 +245,7 @@ class ListResource extends Resource {
 
     /**
      * Sets a callback to process the HTML node once it's created.
-     * @param {(node: ListResourceItemNodeType) => ListResourceItemNodeType | undefined} callback
+     * @param {(node: ListResourceItemNodeType | undefined) => ListResourceItemNodeType | undefined} callback
      * @returns {this}
      */
     setPreProcessNode(callback) {

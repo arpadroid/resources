@@ -1,7 +1,6 @@
 import type { Router } from '@arpadroid/services';
 import { ResourceConfigType } from '../resource/resource.types';
 import { ListFilterOptionsType } from './listFilter.types';
-import { ElementType } from '@arpadroid/tools';
 
 export type ListResourceConfigType = Partial<ResourceConfigType> & {
     currentPage?: number;
@@ -34,8 +33,13 @@ export type ListResourceItemType = {
     id?: string | symbol;
     isSelected?: boolean;
     node?: ListResourceItemNodeType;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
 } & Record<string, any>;
 
-
-export type ListResourceItemNodeType =  ElementType;
+export type ListResourceItemNodeType = HTMLElement & {
+    resourceItem?: ListResourceItemType;
+    reRender?: () => void;
+    setConfig: (config: Record<string, unknown>) => void;
+    _config: Record<string, unknown>;
+    setContent: (content: string) => void;
+};
