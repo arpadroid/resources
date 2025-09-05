@@ -6,6 +6,5 @@ export type MessageResourceConfigType = {
 };
 
 export type MessageType = ListResourceItemType & {
-    someField?: string;
     node?: HTMLElement & { resourceItem?: MessageType };
-};
+} & Record<string, unknown>;
