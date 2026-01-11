@@ -1,5 +1,6 @@
 const config = {
     deps: [],
+    buildType: 'library',
     buildTypes: true,
     logo: `           ┓    • ┓                 
   ┏┓┏┓┏┓┏┓┏┫┏┓┏┓┓┏┫  ┏┓┏┓┏┏┓┓┏┏┓┏┏┓┏

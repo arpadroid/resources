@@ -7,11 +7,10 @@
     "type": "module",
     "sideEffects": false,
     "scripts": {
-        "build": "node ./node_modules/@arpadroid/module/scripts/build-project.mjs --project=resources --minify",
+        "build": "arpadroid-build --minify",
+        "clean": "rm -rf ./dist ./node_modules ./package-lock.json",
         "prepublish": "npm run build",
-        "test": "jest",
-        "test:coverage": "jest --coverage",
-        "generate-docs": "jsdoc2md src/*.js > README.md"
+        "test": "arpadroid-test --jest"
     },
     "engines": {
         "node": ">=16.0.0"
@@ -32,20 +31,13 @@
     },
     "homepage": "https://github.com/arpadroid/resources#readme",
     "peerDependencies": {
-        "@arpadroid/module": "file:../module",
         "@arpadroid/tools": "file:../tools",
         "@arpadroid/context": "file:../context",
+        "@arpadroid/module": "file:../module",
         "@arpadroid/services": "file:../services"
     },
     "devDependencies": {
         "@babel/core": "^7.23.9",
-        "@babel/plugin-syntax-import-assertions": "^7.23.3",
-        "@babel/preset-env": "^7.23.9",
-        "babel-jest": "^29.7.0",
-        "jest": "^29.7.0",
-        "jest-environment-jsdom": "^29.7.0",
-        "jest-junit": "^16.0.0",
-        "jsdoc-to-markdown": "^8.0.1",
-        "jsdom": "^24.0.0"
+        "@babel/preset-env": "^7.23.9"
     }
 }
