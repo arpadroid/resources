@@ -8,7 +8,7 @@
     "sideEffects": false,
     "scripts": {
         "build": "arpadroid-build --minify",
-        "clean": "rm -rf ./dist ./node_modules ./package-lock.json",
+        "clean": "arpadroid-clean",
         "prepublish": "npm run build",
         "test": "arpadroid-test --jest"
     },
