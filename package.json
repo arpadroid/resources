@@ -9,7 +9,6 @@
     "scripts": {
         "build": "arpadroid-build --minify",
         "clean": "arpadroid-clean",
-        "prepublish": "npm run build",
         "test": "arpadroid-test --jest"
     },
     "engines": {
