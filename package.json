@@ -3,13 +3,20 @@
     "version": "1.0.0",
     "description": "Data management abstraction, resources and utilities",
     "types": "./dist/@types/types.compiled.d.ts",
-    "exports": "./dist/arpadroid-resources.js",
+    "exports": {
+        ".": {
+            "types": "./dist/@types/types.compiled.d.ts",
+            "import": "./dist/arpadroid-resources.js"
+        }
+    },
     "type": "module",
     "sideEffects": false,
     "scripts": {
         "build": "arpadroid-build --minify",
         "clean": "arpadroid-clean",
-        "test": "arpadroid-test --jest"
+        "test": "arpadroid-test --jest",
+        "check:types": "arpadroid-check-types",
+        "initialize": "arpadroid-initialize"
     },
     "engines": {
         "node": ">=16.0.0"
