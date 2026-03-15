@@ -162,7 +162,8 @@ class ListResource extends Resource {
     }
 
     getSortDirection() {
-        return this?.sortDirFilter?.getValue() ?? this._payload?.defaultSorting?.order;
+        const filterVal = this.sortDirFilter?.getValue();
+        return filterVal ?? this._payload?.defaultSorting?.order;
     }
 
     /**
@@ -386,12 +387,9 @@ class ListResource extends Resource {
 
         this.initializeSelectedItems();
         if (update) {
-            const signalItems = () => {
-                const items = this._getItems();
-                this.signal('items', items);
-                this.signal('items_updated', items);
-            };
-            this.isStatic() ? setTimeout(signalItems, 10) : signalItems();
+            const items = this._getItems();
+            this.signal('items', items);
+            this.signal('items_updated', items);
         }
         return payload;
     }
@@ -419,7 +417,8 @@ class ListResource extends Resource {
         }
         this.staticQueryCount = items.length;
         const sortBy = this.sortFilter?.getValue();
-        items = sortObjectArrayByKey(items, String(sortBy), String(this.sortDirFilter?.getValue()));
+        const sortDir = this.sortDirFilter?.getValue();
+        items = sortObjectArrayByKey(items, String(sortBy), String(sortDir));
         items = paginateArray(items, this.getPerPage(), this.getCurrentPage());
         this.staticItems = items;
         return items;
@@ -847,6 +846,7 @@ class ListResource extends Resource {
     setSort(sortBy, sortDir) {
         this.sortFilter?.setValue(sortBy);
         this.sortDirFilter?.setValue(sortDir);
+        this.sortDirFilter?.setDefaultValue(sortDir);
         return this;
     }
 
@@ -1107,7 +1107,7 @@ class ListResource extends Resource {
     }
 
     getSelectedItems() {
-        return this.hasSelectionSave() ? this.getSavedSelections() : this.selectedItems ?? [];
+        return this.hasSelectionSave() ? this.getSavedSelections() : (this.selectedItems ?? []);
     }
 
     getSavedSelections() {
