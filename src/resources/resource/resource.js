@@ -127,7 +127,7 @@ class Resource {
     _initializeProperties() {
         this._onError = this._onError.bind(this);
         this._onSuccess = this._onSuccess.bind(this);
-        this._onComplete = this._onComplete.bind(this);
+        this.$onComplete = this.$onComplete.bind(this);
         this._payload = {};
         if (Object.keys(this._config?.payload ?? {}).length) {
             this._initializePayload(this._config?.payload);
@@ -154,7 +154,7 @@ class Resource {
             this.request = Promise.all(promises)
                 .then(this._onSuccess)
                 .catch(this._onError)
-                .finally(this._onComplete);
+                .finally(this.$onComplete);
         }
         return this.request;
     }
@@ -170,7 +170,7 @@ class Resource {
                 Promise.all(this.fetchPromises())
                     .then(this._onSuccess)
                     .catch(this._onError)
-                    .finally(this._onComplete)
+                    .finally(this.$onComplete)
             )
             .catch(error => this._onError(error));
     }
@@ -302,7 +302,7 @@ class Resource {
         return Promise.reject(response);
     }
 
-    _onComplete() {
+    $onComplete() {
         setTimeout(() => (this.isReady = true), this._config?.debounceFetch);
         this.isReady = true;
         this.hasFetched = true;
