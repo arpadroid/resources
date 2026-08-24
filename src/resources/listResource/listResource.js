@@ -24,8 +24,13 @@ class ListResource extends Resource {
     //////////////////////////////
     // #region INITIALIZATION
     //////////////////////////////
+
     /** @type {ListResourceConfigType} */
     _config = this._config;
+
+    /** @type {(() => void) | undefined} */
+    routerUnsubscribe = undefined;
+
     /**
      * Creates a new ListResource instance.
      * @param {ListResourceConfigType} config
@@ -35,6 +40,8 @@ class ListResource extends Resource {
     }
 
     _initializeProperties() {
+        this.initializeRegisterItems = this.initializeRegisterItems.bind(this);
+        this.onRouteChanged = this.onRouteChanged.bind(this);
         // /** @type {ListResourceConfigType | Record<string, never>} */
         // this._config = {};
         /** @type {Record<string, ListFilter>} */
@@ -54,8 +61,7 @@ class ListResource extends Resource {
         this.selectionLengthKey = '';
         this.selectionRedirectKey = '';
         super._initializeProperties();
-        /** @type {Router} */ // @ts-ignore
-        this.router = getService('router');
+        this.router = /** @type {Router} */ (getService('router'));
     }
 
     /**
@@ -99,6 +105,19 @@ class ListResource extends Resource {
      */
     getComponent() {
         return this._config?.listComponent;
+    }
+
+    /**
+     * Sets the configuration of the resource.
+     * @param {ListResourceConfigType | Record<string, never>} config
+     * @returns {ListResource}
+     */
+    setConfig(config = {}) {
+        this._config = this._setConfig(config);
+        if (this._config?.listComponent) {
+            this.list = this._config.listComponent;
+        }
+        return this;
     }
 
     /**
@@ -314,8 +333,17 @@ class ListResource extends Resource {
     }
 
     handleRouteChange() {
-        const onRouteChanged = () => this.haveFiltersChanged() && this.fetch();
-        this.router?.on('route_change', onRouteChanged, this._unsubscribes);
+        this.routerUnsubscribe = this.router?.on('route_change', this.onRouteChanged);
+    }
+
+    async onRouteChanged() {
+        if (this.list && !this.list.isConnected) {
+            this.routerUnsubscribe?.();
+            return;
+        }
+        if (this.haveFiltersChanged()) {
+            this.fetch();
+        }
     }
 
     getQuery() {
@@ -512,6 +540,20 @@ class ListResource extends Resource {
         return item;
     }
 
+    registeringItems = false;
+    async initializeRegisterItems() {
+        if (this.registeringItems) return;
+        this.registeringItems = true;
+        if (this.isStatic() && (this.items?.length || 0) > this.getPerPage()) {
+            this.items?.forEach(({ node }) => node?.isConnected && node?.remove());
+            await new Promise(resolve => setTimeout(resolve));
+            this.paginate();
+            this.signal('items', this._getItems());
+            this.list?.controls?.reRender?.();
+        }
+        this.registeringItems = false;
+    }
+
     /**
      * Registers an item with a node.
      * @param {ListResourceItemType} payload
@@ -533,6 +575,7 @@ class ListResource extends Resource {
             item.node = node;
             this.itemsById && (this.itemsById[id] = item);
             payload.id = id;
+            this.initializeRegisterItems();
             return item;
         }
 
@@ -1024,7 +1067,7 @@ class ListResource extends Resource {
     goToPage(page) {
         const url = editURL(window.location.href, { [String(this._config?.pageParam)]: page });
         const rv = this.router?.go(url);
-        this.pageFilter?.setValue(page);
+        this.pageFilter?.setValue(String(page));
         return rv;
     }
 
