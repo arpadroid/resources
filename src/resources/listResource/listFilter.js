@@ -183,8 +183,11 @@ class ListFilter {
     getSavedValue() {
         if (this._config.hasLocalStorage) {
             try {
-                const item = localStorage.getItem(this._id);
-                return item ? JSON.parse(item) : undefined;
+                let item = localStorage.getItem(this._id);
+                if (item === 'undefined') {
+                    item = null;
+                }
+                return item ? JSON?.parse(item) : undefined;
             } catch (error) {
                 console.error(error);
             }
