@@ -11,11 +11,7 @@ export type ListResourceConfigType = Partial<ResourceConfigType> & {
     isCollapsible?: boolean;
     isStatic?: boolean;
     itemsPerPage?: number;
-    listComponent?: HTMLElement & {
-        controls?: HTMLElement & {
-            reRender?: () => void;
-        };
-    };
+    listComponent?: ListComponentType;
     pageParam?: string;
     perPageParam?: string;
     perPage?: number;
@@ -46,4 +42,10 @@ export type ListResourceItemNodeType = HTMLElement & {
     setConfig: (config: Record<string, unknown>) => void;
     _config: Record<string, unknown>;
     setContent: (content: string) => void;
+};
+
+export type ListComponentType = HTMLElement & {
+    controls?: HTMLElement & {
+        reRender?: () => void;
+    };
 };

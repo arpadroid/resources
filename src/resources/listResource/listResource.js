@@ -541,16 +541,19 @@ class ListResource extends Resource {
     }
 
     registeringItems = false;
+    hasRegisteredItems = false;
     async initializeRegisterItems() {
-        if (this.registeringItems) return;
+        await new Promise(resolve => setTimeout(resolve, 0));
+        if (this.registeringItems || this.hasRegisteredItems) return;
         this.registeringItems = true;
-        if (this.isStatic() && (this.items?.length || 0) > this.getPerPage()) {
+        if ((this.isStatic() && this.items?.length) || 0 > this.getPerPage()) {
             this.items?.forEach(({ node }) => node?.isConnected && node?.remove());
-            await new Promise(resolve => setTimeout(resolve));
             this.paginate();
-            this.signal('items', this._getItems());
+            const items = this._getItems();
+            this.signal('items', items);
             this.list?.controls?.reRender?.();
         }
+        this.hasRegisteredItems = true;
         this.registeringItems = false;
     }
 
@@ -580,7 +583,6 @@ class ListResource extends Resource {
         }
 
         this.itemsById[id].node = node;
-
         return this.itemsById[id];
     }
 
