@@ -464,12 +464,14 @@ class ListResource extends Resource {
         }
     }
 
-    refresh(refreshFilters = true) {
-        if (refreshFilters) {
-            const filtersURL = this.getFiltersURL(false);
-            this.router?.go(filtersURL);
+    async refresh(refreshFilters = true) {
+        const currentURL = window.location.pathname + window.location.search;
+        const filtersURL = this.getFiltersURL(false);
+        if (refreshFilters && currentURL !== filtersURL) {            
+            await this.router?.go(filtersURL);
+        } else {
+            return this.fetch() ?? this.request;
         }
-        return this.fetch() ?? this.request;
     }
 
     hasNoItems() {
@@ -1098,12 +1100,14 @@ class ListResource extends Resource {
         return page;
     }
 
-    clearFilters(sendUpdate = false) {
+    clearFilters(sendUpdate = false, navigate = true) {
         this.clearFilterValues(true);
         this.hasActiveFilter = false;
         this.pageFilter?.resetValue(sendUpdate);
-        const url = this.getClearFiltersURL();
-        this.router?.go(url);
+        if (navigate) {
+            const url = this.getClearFiltersURL();
+            this.router?.go(url);
+        }
     }
 
     clearFilterValues(sendUpdate = false) {
